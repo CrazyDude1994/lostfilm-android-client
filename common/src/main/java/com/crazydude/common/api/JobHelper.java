@@ -13,19 +13,26 @@ import java.util.List;
 
 public class JobHelper {
 
+    private final JobManager mJobManager;
     private Context mContext;
 
     public JobHelper(Context context) {
         mContext = context;
+        mJobManager = new JobManager(new Configuration.Builder(mContext)
+                .minConsumerCount(5)
+                .maxConsumerCount(20)
+                .build());
     }
 
     public void scheduleBannerUpdate() {
+        if (!Utils.hasSession()) {
+            return;
+        }
         DatabaseManager databaseManager = new DatabaseManager();
         List<TvShow> tvShows = databaseManager.getBannerlessTvShows();
-        JobManager manager = new JobManager(new Configuration.Builder(mContext)
-                .build());
+
         for (TvShow tvShow : tvShows) {
-            manager.addJobInBackground(new TvShowFetchJob(tvShow.getId()));
+            mJobManager.addJobInBackground(new TvShowFetchJob(tvShow.getId()));
         }
     }
 }

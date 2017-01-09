@@ -1,11 +1,11 @@
 package com.crazydude.lostfilmclient;
 
 import android.app.LoaderManager;
+import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
-import android.support.v17.leanback.widget.CursorObjectAdapter;
 import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
@@ -15,6 +15,7 @@ import com.crazydude.common.api.JobHelper;
 import com.crazydude.common.api.TvShow;
 import com.crazydude.common.api.TvShowLoader;
 import com.crazydude.common.api.TvShowUpdateEvent;
+import com.crazydude.common.api.Utils;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -31,19 +32,6 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
     private static final int TV_SHOWS_LOADER = 0;
     private ArrayObjectAdapter mCategoriesAdapter;
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        EventBus.getDefault().unregister(this);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        EventBus.getDefault().register(this);
-        new JobHelper(getActivity()).scheduleBannerUpdate();
-    }
-    
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdate(TvShowUpdateEvent event) {
         DatabaseManager databaseManager = new DatabaseManager();
@@ -60,6 +48,21 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+        EventBus.getDefault().unregister(this);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        EventBus.getDefault().register(this);
+        if (!Utils.hasSession()) {
+            startActivity(new Intent(getActivity(), LoginActivity.class));
+        }
+    }
+
+    @Override
     public Loader<List<TvShow>> onCreateLoader(int i, Bundle bundle) {
         switch (i) {
             case TV_SHOWS_LOADER:
@@ -71,6 +74,7 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
 
     @Override
     public void onLoadFinished(Loader<List<TvShow>> loader, List<TvShow> tvShows) {
+        mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
         String lastChar = "";
         ArrayObjectAdapter adapter = null;
         for (TvShow show : tvShows) {
@@ -84,6 +88,7 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
             adapter.add(show);
         }
         mCategoriesAdapter.add(new ListRow(new HeaderItem(lastChar.toUpperCase()), adapter));
+        setAdapter(mCategoriesAdapter);
         new JobHelper(getActivity()).scheduleBannerUpdate();
     }
 
@@ -95,8 +100,6 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        setAdapter(mCategoriesAdapter);
         loadTvShows();
     }
 

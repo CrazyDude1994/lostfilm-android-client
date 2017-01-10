@@ -15,24 +15,29 @@ public class JobHelper {
 
     private final JobManager mJobManager;
     private Context mContext;
+    private DatabaseManager mDatabaseManager;
 
     public JobHelper(Context context) {
         mContext = context;
         mJobManager = new JobManager(new Configuration.Builder(mContext)
-                .minConsumerCount(5)
-                .maxConsumerCount(20)
+                .maxConsumerCount(10)
                 .build());
+        mDatabaseManager = new DatabaseManager();
     }
 
     public void scheduleBannerUpdate() {
         if (!Utils.hasSession()) {
             return;
         }
-        DatabaseManager databaseManager = new DatabaseManager();
-        List<TvShow> tvShows = databaseManager.getBannerlessTvShows();
+        List<TvShow> tvShows = mDatabaseManager.getBannerlessTvShows();
 
         for (TvShow tvShow : tvShows) {
             mJobManager.addJobInBackground(new TvShowFetchJob(tvShow.getId()));
         }
+    }
+
+    public void close() {
+        mDatabaseManager.close();
+        mContext = null;
     }
 }

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import io.realm.Realm;
 import retrofit2.Response;
 
 /**
@@ -18,13 +17,10 @@ import retrofit2.Response;
 public class TvShowLoader extends AsyncTaskLoader<List<TvShow>> {
 
     private LostFilmApi mLostFilmApi;
-    private DatabaseManager mDatabaseManager;
 
     public TvShowLoader(Context context) {
         super(context);
-
-        mLostFilmApi = new LostFilmApi();
-        mDatabaseManager = new DatabaseManager();
+        mLostFilmApi = LostFilmApi.getInstance();
     }
 
     @Override
@@ -35,13 +31,16 @@ public class TvShowLoader extends AsyncTaskLoader<List<TvShow>> {
 
     @Override
     public List<TvShow> loadInBackground() {
+        DatabaseManager databaseManager = new DatabaseManager();
         try {
             Response<TvShow[]> response = mLostFilmApi.getTvShows().execute();
             ArrayList<TvShow> shows = new ArrayList<>(Arrays.asList(response.body()));
-            List<TvShow> tvShows = mDatabaseManager.updateTvShows(shows);
+            List<TvShow> tvShows = databaseManager.updateTvShows(shows);
             return tvShows;
         } catch (IOException e) {
             return null;
+        } finally {
+            databaseManager.close();
         }
     }
 }

@@ -12,9 +12,14 @@ import io.realm.RealmResults;
 
 public class DatabaseManager {
 
+    private final Realm mRealm;
+
+    public DatabaseManager() {
+        mRealm = Realm.getDefaultInstance();
+    }
+
     public List<TvShow> updateTvShows(final List<TvShow> tvShows) {
-        Realm realm = Realm.getDefaultInstance();
-        realm.executeTransaction(new Realm.Transaction() {
+        mRealm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(Realm realm) {
                 for (TvShow show : tvShows) {
@@ -33,33 +38,29 @@ public class DatabaseManager {
             }
         });
 
-        RealmResults<TvShow> all = realm.where(TvShow.class)
+        RealmResults<TvShow> all = mRealm.where(TvShow.class)
                 .findAll();
 
         ArrayList<TvShow> shows = new ArrayList<>();
         for (TvShow tvShow : all) {
             shows.add(new TvShow(tvShow.getId(), tvShow.getName(), tvShow.getImageUrl()));
         }
-        realm.close();
         return shows;
     }
 
     public List<TvShow> getBannerlessTvShows() {
-        Realm realm = Realm.getDefaultInstance();
-        RealmResults<TvShow> all = realm.where(TvShow.class)
+        RealmResults<TvShow> all = mRealm.where(TvShow.class)
                 .equalTo("mImageUrl", ((String) null))
                 .findAll();
         ArrayList<TvShow> shows = new ArrayList<>();
         for (TvShow tvShow : all) {
             shows.add(new TvShow(tvShow.getId(), tvShow.getName(), tvShow.getImageUrl()));
         }
-        realm.close();
         return shows;
     }
 
     public void updateTvShow(final TvShow tvShow) {
-        Realm realm = Realm.getDefaultInstance();
-        realm.executeTransaction(new Realm.Transaction() {
+        mRealm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(Realm realm) {
                 TvShow tvShowRealm = realm.where(TvShow.class)
@@ -68,17 +69,18 @@ public class DatabaseManager {
                 tvShowRealm.setImageUrl(tvShow.getImageUrl());
             }
         });
-        realm.close();
     }
 
     public TvShow getTvShow(int id) {
-        Realm realm = Realm.getDefaultInstance();
-        TvShow show = realm.where(TvShow.class)
+        TvShow show = mRealm.where(TvShow.class)
                 .equalTo("mId", id)
                 .findFirst();
         TvShow tvShow = new TvShow(show.getId(), show.getName(), show.getImageUrl());
-        realm.close();
 
         return tvShow;
+    }
+
+    public void close() {
+        mRealm.close();
     }
 }

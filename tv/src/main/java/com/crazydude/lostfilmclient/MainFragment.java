@@ -31,11 +31,12 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
 
     private static final int TV_SHOWS_LOADER = 0;
     private ArrayObjectAdapter mCategoriesAdapter;
+    private JobHelper mJobHelper;
+    private DatabaseManager mDatabaseManager;
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdate(TvShowUpdateEvent event) {
-        DatabaseManager databaseManager = new DatabaseManager();
-        TvShow tvShow = databaseManager.getTvShow(event.getId());
+        TvShow tvShow = mDatabaseManager.getTvShow(event.getId());
         ArrayObjectAdapter adapter = (ArrayObjectAdapter) getAdapter();
         for (int i = 0; i < adapter.size(); i++) {
             ArrayObjectAdapter tvShowAdapter = (ArrayObjectAdapter) ((ListRow) adapter.get(i)).getAdapter();
@@ -89,7 +90,7 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
         }
         mCategoriesAdapter.add(new ListRow(new HeaderItem(lastChar.toUpperCase()), adapter));
         setAdapter(mCategoriesAdapter);
-        new JobHelper(getActivity()).scheduleBannerUpdate();
+        mJobHelper.scheduleBannerUpdate();
     }
 
     @Override
@@ -100,9 +101,17 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        mJobHelper = new JobHelper(getActivity());
+        mDatabaseManager = new DatabaseManager();
         loadTvShows();
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mJobHelper.close();
+        mDatabaseManager.close();
+    }
 
     private void loadTvShows() {
         getLoaderManager().initLoader(0, null, this);

@@ -19,10 +19,11 @@ import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 public class LostFilmApi {
 
+    private static final LostFilmApi mLostFilmApi = new LostFilmApi();
     private Retrofit mRetrofit;
     private LostFilmService mLostFilmService;
 
-    public LostFilmApi() {
+    private LostFilmApi() {
         mRetrofit = new Retrofit.Builder()
                 .baseUrl("https://www.lostfilm.tv/")
                 .addConverterFactory(ScalarsConverterFactory.create())
@@ -50,6 +51,10 @@ public class LostFilmApi {
                 .build();
 
         mLostFilmService = mRetrofit.create(LostFilmService.class);
+    }
+
+    public static LostFilmApi getInstance() {
+        return mLostFilmApi;
     }
 
     public Call<TvShow[]> getTvShows() {

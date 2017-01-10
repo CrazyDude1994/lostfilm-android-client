@@ -9,6 +9,10 @@ import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
+import android.support.v17.leanback.widget.OnItemViewClickedListener;
+import android.support.v17.leanback.widget.Presenter;
+import android.support.v17.leanback.widget.Row;
+import android.support.v17.leanback.widget.RowPresenter;
 
 import com.crazydude.common.api.DatabaseManager;
 import com.crazydude.common.api.JobHelper;
@@ -27,7 +31,7 @@ import java.util.List;
  * Created by Crazy on 08.01.2017.
  */
 
-public class MainFragment extends BrowseFragment implements LoaderManager.LoaderCallbacks<List<TvShow>> {
+public class MainFragment extends BrowseFragment implements LoaderManager.LoaderCallbacks<List<TvShow>>, OnItemViewClickedListener {
 
     private static final int TV_SHOWS_LOADER = 0;
     private ArrayObjectAdapter mCategoriesAdapter;
@@ -46,6 +50,13 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
                 }
             }
         }
+    }
+
+    @Override
+    public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
+        Intent intent = new Intent(getActivity(), TvShowActivity.class);
+        intent.putExtra(TvShowActivity.EXTRA_TVSHOW_ID, ((TvShow) item).getId());
+        startActivity(intent);
     }
 
     @Override
@@ -104,6 +115,7 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
         mJobHelper = new JobHelper(getActivity());
         mDatabaseManager = new DatabaseManager();
         loadTvShows();
+        setOnItemViewClickedListener(this);
     }
 
     @Override

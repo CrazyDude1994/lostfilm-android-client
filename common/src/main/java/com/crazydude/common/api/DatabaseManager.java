@@ -44,7 +44,7 @@ public class DatabaseManager {
 
         ArrayList<TvShow> shows = new ArrayList<>();
         for (TvShow tvShow : all) {
-            shows.add(new TvShow(tvShow.getId(), tvShow.getName(), tvShow.getImageUrl(), null));
+            shows.add(new TvShow(tvShow.getId(), tvShow.getName(), tvShow.getImageUrl(), tvShow.getSeasons()));
         }
         return shows;
     }
@@ -55,7 +55,7 @@ public class DatabaseManager {
                 .findAll();
         ArrayList<TvShow> shows = new ArrayList<>();
         for (TvShow tvShow : all) {
-            shows.add(new TvShow(tvShow.getId(), tvShow.getName(), tvShow.getImageUrl(), null));
+            shows.add(new TvShow(tvShow.getId(), tvShow.getName(), tvShow.getImageUrl(), tvShow.getSeasons()));
         }
         return shows;
     }
@@ -79,9 +79,8 @@ public class DatabaseManager {
         TvShow show = mRealm.where(TvShow.class)
                 .equalTo("mId", id)
                 .findFirst();
-        TvShow tvShow = new TvShow(show.getId(), show.getName(), show.getImageUrl(), null);
 
-        return tvShow;
+        return new TvShow(show.getId(), show.getName(), show.getImageUrl(), show.getSeasons());
     }
 
     public void close() {

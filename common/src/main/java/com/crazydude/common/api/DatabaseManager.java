@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
+import io.realm.RealmList;
 import io.realm.RealmResults;
 
 /**
@@ -43,7 +44,7 @@ public class DatabaseManager {
 
         ArrayList<TvShow> shows = new ArrayList<>();
         for (TvShow tvShow : all) {
-            shows.add(new TvShow(tvShow.getId(), tvShow.getName(), tvShow.getImageUrl()));
+            shows.add(new TvShow(tvShow.getId(), tvShow.getName(), tvShow.getImageUrl(), null));
         }
         return shows;
     }
@@ -54,7 +55,7 @@ public class DatabaseManager {
                 .findAll();
         ArrayList<TvShow> shows = new ArrayList<>();
         for (TvShow tvShow : all) {
-            shows.add(new TvShow(tvShow.getId(), tvShow.getName(), tvShow.getImageUrl()));
+            shows.add(new TvShow(tvShow.getId(), tvShow.getName(), tvShow.getImageUrl(), null));
         }
         return shows;
     }
@@ -66,6 +67,9 @@ public class DatabaseManager {
                 TvShow tvShowRealm = realm.where(TvShow.class)
                         .equalTo("mId", tvShow.getId())
                         .findFirst();
+                List<Season> seasons = realm.copyToRealmOrUpdate(tvShow.getSeasons());
+                tvShowRealm.setSeasons(new RealmList<Season>());
+                tvShowRealm.getSeasons().addAll(seasons);
                 tvShowRealm.setImageUrl(tvShow.getImageUrl());
             }
         });
@@ -75,7 +79,7 @@ public class DatabaseManager {
         TvShow show = mRealm.where(TvShow.class)
                 .equalTo("mId", id)
                 .findFirst();
-        TvShow tvShow = new TvShow(show.getId(), show.getName(), show.getImageUrl());
+        TvShow tvShow = new TvShow(show.getId(), show.getName(), show.getImageUrl(), null);
 
         return tvShow;
     }

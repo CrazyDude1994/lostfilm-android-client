@@ -1,5 +1,7 @@
 package com.crazydude.common.api;
 
+import android.util.Log;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -8,7 +10,10 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import io.realm.RealmList;
 import okhttp3.ResponseBody;
 import retrofit2.Converter;
 import retrofit2.Retrofit;
@@ -19,11 +24,11 @@ import retrofit2.Retrofit;
 
 public class LostFilmApiConverterFactory extends Converter.Factory {
 
-    public static LostFilmApiConverterFactory create() {
-        return new LostFilmApiConverterFactory();
+    private LostFilmApiConverterFactory() {
     }
 
-    private LostFilmApiConverterFactory() {
+    public static LostFilmApiConverterFactory create() {
+        return new LostFilmApiConverterFactory();
     }
 
     @Override
@@ -38,7 +43,7 @@ public class LostFilmApiConverterFactory extends Converter.Factory {
                     for (int i = 0; i < shows.size(); i++) {
                         Integer id = Integer.valueOf(shows.get(i).attr("href").split("=")[1]);
                         String name = shows.get(i).text();
-                        tvShows[i] = new TvShow(id, name, null);
+                        tvShows[i] = new TvShow(id, name, null, null);
                     }
 
                     return tvShows;
@@ -49,8 +54,37 @@ public class LostFilmApiConverterFactory extends Converter.Factory {
                 @Override
                 public TvShow convert(ResponseBody value) throws IOException {
                     Document document = Jsoup.parse(value.string());
+                    Elements episodes = document.getElementsByClass("t_episode_title");
+                    TvShow tvShow = new TvShow(null, null, null, new RealmList<Season>());
+                    Pattern pattern = Pattern.compile("ShowAllReleases\\('.+','(.+)','(.+)'\\)");
+                    Season season = null;
+                    for (Element episode : episodes) {
+                        String episodeName = episode.child(0).child(0).text();
+                        String episodeInfo = episode.attr("onclick");
+                        Matcher matcher = pattern.matcher(episodeInfo);
+                        if (matcher.find()) {
+                            String seasonNumber = matcher.group(1);
+                            String episodeNumber = matcher.group(2);
+
+                            if (season != null && !season.getId().equals(seasonNumber)) {
+                                season = null;
+                            }
+
+                            if (season == null) {
+                                season = new Season(seasonNumber, episodeNumber.equals("99"), new RealmList<Episode>());
+                                tvShow.getSeasons().add(season);
+                            }
+
+                            if (!episodeNumber.equals("99")) {
+                                season.getEpisodes().add(new Episode(episodeNumber, episodeName));
+                            }
+                        } else {
+                            Log.e("Parser", episodeInfo);
+                        }
+                    }
                     String imgUrl = document.getElementsByClass("mid").get(0).getElementsByTag("img").get(0).attr("src");
-                    return new TvShow(null, null, "http://www.lostfilm.tv/" + imgUrl);
+                    tvShow.setImageUrl("http://www.lostfilm.tv/" + imgUrl);
+                    return tvShow;
                 }
             };
         } else {

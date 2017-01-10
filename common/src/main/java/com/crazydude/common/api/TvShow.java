@@ -1,5 +1,6 @@
 package com.crazydude.common.api;
 
+import io.realm.RealmList;
 import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 import io.realm.annotations.Required;
@@ -16,11 +17,13 @@ public class TvShow extends RealmObject {
     @Required
     private String mName;
     private String mImageUrl;
+    private RealmList<Season> mSeasons;
 
-    public TvShow(Integer id, String name, String imageUrl) {
+    public TvShow(Integer id, String name, String imageUrl, RealmList<Season> seasons) {
         mId = id;
         mName = name;
         mImageUrl = imageUrl;
+        mSeasons = seasons;
     }
 
     public TvShow() {
@@ -48,5 +51,13 @@ public class TvShow extends RealmObject {
 
     public void setName(String name) {
         mName = name;
+    }
+
+    public RealmList<Season> getSeasons() {
+        return mSeasons;
+    }
+
+    public void setSeasons(RealmList<Season> seasons) {
+        mSeasons = seasons;
     }
 }

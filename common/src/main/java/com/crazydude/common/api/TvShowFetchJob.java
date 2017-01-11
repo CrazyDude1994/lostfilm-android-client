@@ -9,6 +9,8 @@ import com.birbit.android.jobqueue.RetryConstraint;
 
 import org.greenrobot.eventbus.EventBus;
 
+import rx.schedulers.Schedulers;
+
 /**
  * Created by Crazy on 09.01.2017.
  */
@@ -28,12 +30,17 @@ public class TvShowFetchJob extends Job {
     @Override
     public void onRun() throws Throwable {
         LostFilmApi lostFilmApi = LostFilmApi.getInstance();
-        DatabaseManager databaseManager = new DatabaseManager();
-        TvShow tvShow = lostFilmApi.getTvShowData(mId).execute().body();
-        tvShow.setId(mId);
-        databaseManager.updateTvShow(tvShow);
-        databaseManager.close();
-        EventBus.getDefault().post(new TvShowUpdateEvent(tvShow.getId()));
+        lostFilmApi.getTvShowData(mId)
+                .subscribeOn(Schedulers.immediate())
+                .observeOn(Schedulers.immediate())
+                .subscribe(
+                        tvShow -> {
+                            DatabaseManager databaseManager = new DatabaseManager();
+                            tvShow.setId(mId);
+                            databaseManager.updateTvShow(tvShow);
+                            databaseManager.close();
+                            EventBus.getDefault().post(new TvShowUpdateEvent(tvShow.getId()));
+                        });
     }
 
     @Override

@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'realm-android'
+apply plugin: 'me.tatarka.retrolambda'
 
 android {
     compileSdkVersion 25
@@ -20,6 +21,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -30,6 +35,8 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.1.0'
     compile 'com.squareup.retrofit2:retrofit:2.1.0'
     compile 'com.squareup.retrofit2:converter-scalars:2.1.0'
+    compile 'com.squareup.retrofit2:adapter-rxjava:2.1.0'
+    compile 'io.reactivex:rxandroid:1.2.1'
     compile 'org.jsoup:jsoup:1.10.2'
     compile 'com.birbit:android-priority-jobqueue:2.0.1'
     compile 'org.greenrobot:eventbus:3.0.0'

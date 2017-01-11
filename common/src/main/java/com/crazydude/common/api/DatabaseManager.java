@@ -20,21 +20,18 @@ public class DatabaseManager {
     }
 
     public List<TvShow> updateTvShows(final List<TvShow> tvShows) {
-        mRealm.executeTransaction(new Realm.Transaction() {
-            @Override
-            public void execute(Realm realm) {
-                for (TvShow show : tvShows) {
-                    TvShow tvShow = realm.where(TvShow.class)
-                            .equalTo("mId", show.getId())
-                            .findFirst();
+        mRealm.executeTransaction(realm -> {
+            for (TvShow show : tvShows) {
+                TvShow tvShow = realm.where(TvShow.class)
+                        .equalTo("mId", show.getId())
+                        .findFirst();
 
-                    if (tvShow != null) {
-                        tvShow.setName(show.getName());
-                    } else {
-                        TvShow realmObject = realm.createObject(TvShow.class, show.getId());
-                        realmObject.setName(show.getName());
-                        realmObject.setImageUrl(null);
-                    }
+                if (tvShow != null) {
+                    tvShow.setName(show.getName());
+                } else {
+                    TvShow realmObject = realm.createObject(TvShow.class, show.getId());
+                    realmObject.setName(show.getName());
+                    realmObject.setImageUrl(null);
                 }
             }
         });
@@ -67,6 +64,9 @@ public class DatabaseManager {
                 TvShow tvShowRealm = realm.where(TvShow.class)
                         .equalTo("mId", tvShow.getId())
                         .findFirst();
+                for (Season season : tvShow.getSeasons()) {
+                    season.setTvShow(tvShowRealm);
+                }
                 List<Season> seasons = realm.copyToRealm(tvShow.getSeasons());
                 tvShowRealm.setSeasons(new RealmList<Season>());
                 tvShowRealm.getSeasons().addAll(seasons);

@@ -1,9 +1,7 @@
 package com.crazydude.lostfilmclient;
 
 import android.app.ActivityOptions;
-import android.app.LoaderManager;
 import android.content.Intent;
-import android.content.Loader;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
@@ -17,8 +15,8 @@ import android.support.v17.leanback.widget.RowPresenter;
 
 import com.crazydude.common.api.DatabaseManager;
 import com.crazydude.common.api.JobHelper;
+import com.crazydude.common.api.LostFilmApi;
 import com.crazydude.common.api.TvShow;
-import com.crazydude.common.api.TvShowLoader;
 import com.crazydude.common.api.TvShowUpdateEvent;
 import com.crazydude.common.api.Utils;
 
@@ -26,18 +24,25 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import rx.Observer;
+import rx.Subscription;
 
 /**
  * Created by Crazy on 08.01.2017.
  */
 
-public class MainFragment extends BrowseFragment implements LoaderManager.LoaderCallbacks<List<TvShow>>, OnItemViewClickedListener {
+public class MainFragment extends BrowseFragment implements OnItemViewClickedListener, Observer<TvShow[]> {
 
     private static final int TV_SHOWS_LOADER = 0;
     private ArrayObjectAdapter mCategoriesAdapter;
     private JobHelper mJobHelper;
     private DatabaseManager mDatabaseManager;
+    private LostFilmApi mLostFilmApi;
+    private Subscription mSubscription;
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdate(TvShowUpdateEvent event) {
@@ -51,6 +56,39 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
                 }
             }
         }
+    }
+
+    @Override
+    public void onCompleted() {
+
+    }
+
+    @Override
+    public void onError(Throwable e) {
+
+    }
+
+    @Override
+    public void onNext(TvShow[] tvShows) {
+        ArrayList<TvShow> shows = new ArrayList<>(Arrays.asList(tvShows));
+        List<TvShow> tvShowsManaged = mDatabaseManager.updateTvShows(shows);
+
+        mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+        String lastChar = "";
+        ArrayObjectAdapter adapter = null;
+        for (TvShow show : tvShowsManaged) {
+            if (!lastChar.equalsIgnoreCase(show.getName().substring(0, 1))) {
+                if (adapter != null) {
+                    mCategoriesAdapter.add(new ListRow(new HeaderItem(lastChar.toUpperCase()), adapter));
+                }
+                adapter = new ArrayObjectAdapter(new TvShowPresenter());
+                lastChar = show.getName().substring(0, 1);
+            }
+            adapter.add(show);
+        }
+        mCategoriesAdapter.add(new ListRow(new HeaderItem(lastChar.toUpperCase()), adapter));
+        setAdapter(mCategoriesAdapter);
+        mJobHelper.scheduleBannerUpdate();
     }
 
     @Override
@@ -76,45 +114,11 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
     }
 
     @Override
-    public Loader<List<TvShow>> onCreateLoader(int i, Bundle bundle) {
-        switch (i) {
-            case TV_SHOWS_LOADER:
-                return new TvShowLoader(getActivity());
-            default:
-                return null;
-        }
-    }
-
-    @Override
-    public void onLoadFinished(Loader<List<TvShow>> loader, List<TvShow> tvShows) {
-        mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        String lastChar = "";
-        ArrayObjectAdapter adapter = null;
-        for (TvShow show : tvShows) {
-            if (!lastChar.equalsIgnoreCase(show.getName().substring(0, 1))) {
-                if (adapter != null) {
-                    mCategoriesAdapter.add(new ListRow(new HeaderItem(lastChar.toUpperCase()), adapter));
-                }
-                adapter = new ArrayObjectAdapter(new TvShowPresenter());
-                lastChar = show.getName().substring(0, 1);
-            }
-            adapter.add(show);
-        }
-        mCategoriesAdapter.add(new ListRow(new HeaderItem(lastChar.toUpperCase()), adapter));
-        setAdapter(mCategoriesAdapter);
-        mJobHelper.scheduleBannerUpdate();
-    }
-
-    @Override
-    public void onLoaderReset(Loader<List<TvShow>> loader) {
-
-    }
-
-    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mJobHelper = new JobHelper(getActivity());
         mDatabaseManager = new DatabaseManager();
+        mLostFilmApi = LostFilmApi.getInstance();
         setupUI();
         loadTvShows();
         setOnItemViewClickedListener(this);
@@ -125,12 +129,15 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
         super.onDestroy();
         mJobHelper.close();
         mDatabaseManager.close();
+        if (mSubscription != null) {
+            mSubscription.unsubscribe();
+        }
     }
 
     private void setupUI() {
     }
 
     private void loadTvShows() {
-        getLoaderManager().initLoader(0, null, this);
+        mSubscription = mLostFilmApi.getTvShows().subscribe(this);
     }
 }

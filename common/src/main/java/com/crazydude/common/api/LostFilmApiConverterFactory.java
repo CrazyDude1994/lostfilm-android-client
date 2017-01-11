@@ -71,12 +71,12 @@ public class LostFilmApiConverterFactory extends Converter.Factory {
                             }
 
                             if (season == null) {
-                                season = new Season(seasonNumber, episodeNumber.equals("99"), new RealmList<Episode>());
+                                season = new Season(seasonNumber, episodeNumber.equals("99"), new RealmList<Episode>(), null);
                                 tvShow.getSeasons().add(season);
                             }
 
                             if (!episodeNumber.equals("99")) {
-                                season.getEpisodes().add(new Episode(episodeNumber, episodeName));
+                                season.getEpisodes().add(new Episode(episodeNumber, episodeName, season));
                             }
                         } else {
                             Log.e("Parser", episodeInfo);
@@ -85,6 +85,18 @@ public class LostFilmApiConverterFactory extends Converter.Factory {
                     String imgUrl = document.getElementsByClass("mid").get(0).getElementsByTag("img").get(0).attr("src");
                     tvShow.setImageUrl("http://www.lostfilm.tv/" + imgUrl);
                     return tvShow;
+                }
+            };
+        } else if (DownloadLink[].class.getCanonicalName().equals(type.toString())) {
+            return new Converter<ResponseBody, TvShow[]>() {
+                @Override
+                public TvShow[] convert(ResponseBody value) throws IOException {
+                    Pattern pattern = Pattern.compile("h=([\\w\\d]+)");
+                    Matcher matcher = pattern.matcher(value.string());
+                    if (matcher.find()) {
+                        String group = matcher.group(1);
+                    }
+                    return new TvShow[0];
                 }
             };
         } else {

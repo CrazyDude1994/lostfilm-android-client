@@ -10,13 +10,15 @@ public class Episode extends RealmObject {
 
     private String mId;
     private String mName;
+    private Season mSeason;
 
     public Episode() {
     }
 
-    public Episode(String id, String name) {
+    public Episode(String id, String name, Season season) {
         mId = id;
         mName = name;
+        mSeason = season;
     }
 
     public String getId() {
@@ -33,5 +35,13 @@ public class Episode extends RealmObject {
 
     public void setName(String name) {
         mName = name;
+    }
+
+    public Season getSeason() {
+        return mSeason;
+    }
+
+    public void setSeason(Season season) {
+        mSeason = season;
     }
 }

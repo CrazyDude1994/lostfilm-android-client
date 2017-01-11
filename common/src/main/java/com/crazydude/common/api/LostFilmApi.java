@@ -9,9 +9,12 @@ import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
-import retrofit2.Call;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
+import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Crazy on 08.01.2017.
@@ -28,6 +31,7 @@ public class LostFilmApi {
                 .baseUrl("https://www.lostfilm.tv/")
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(LostFilmApiConverterFactory.create())
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .client(new OkHttpClient.Builder().cookieJar(new CookieJar() {
                     @Override
                     public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
@@ -57,11 +61,21 @@ public class LostFilmApi {
         return mLostFilmApi;
     }
 
-    public Call<TvShow[]> getTvShows() {
-        return mLostFilmService.getTvShows();
+    public Observable<TvShow[]> getTvShows() {
+        return mLostFilmService.getTvShows().compose(applySchedulers());
     }
 
-    public Call<TvShow> getTvShowData(int id) {
-        return mLostFilmService.getTvShow(id);
+    public Observable<TvShow> getTvShowData(int id) {
+        return mLostFilmService.getTvShow(id).compose(applySchedulers());
+    }
+
+    public Observable<DownloadLink[]> getTvShowDownloadLink(int tvShowId, String seasonId, String episodeId) {
+        mLostFilmService.getTvShowHash(tvShowId, seasonId, episodeId);
+        return null;
+    }
+
+    <T> Observable.Transformer<T, T> applySchedulers() {
+        return observable -> observable.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
     }
 }

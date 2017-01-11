@@ -88,15 +88,17 @@ public class LostFilmApiConverterFactory extends Converter.Factory {
                 }
             };
         } else if (DownloadLink[].class.getCanonicalName().equals(type.toString())) {
-            return new Converter<ResponseBody, TvShow[]>() {
+            return new Converter<ResponseBody, DownloadLink[]>() {
                 @Override
-                public TvShow[] convert(ResponseBody value) throws IOException {
-                    Pattern pattern = Pattern.compile("h=([\\w\\d]+)");
-                    Matcher matcher = pattern.matcher(value.string());
-                    if (matcher.find()) {
-                        String group = matcher.group(1);
+                public DownloadLink[] convert(ResponseBody value) throws IOException {
+                    String encodedData = new String(value.bytes(), "Cp1251");
+                    Document document = Jsoup.parse(encodedData);
+                    Elements links = document.getElementsContainingOwnText("http://");
+                    DownloadLink[] downloadLinks = new DownloadLink[links.size()];
+                    for (int i = 0; i < links.size(); i++) {
+                        downloadLinks[i] = new DownloadLink(links.get(i).text(), links.get(i).parent().parent().parent().ownText());
                     }
-                    return new TvShow[0];
+                    return downloadLinks;
                 }
             };
         } else {

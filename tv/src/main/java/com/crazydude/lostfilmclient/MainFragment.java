@@ -111,6 +111,7 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         if (!Utils.hasSession()) {
             startActivity(new Intent(getActivity(), LoginActivity.class));
         }
+        loadTvShows();
     }
 
     @Override
@@ -120,7 +121,6 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         mDatabaseManager = new DatabaseManager();
         mLostFilmApi = LostFilmApi.getInstance();
         setupUI();
-        loadTvShows();
         setOnItemViewClickedListener(this);
     }
 

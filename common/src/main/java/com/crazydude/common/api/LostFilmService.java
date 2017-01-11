@@ -20,4 +20,11 @@ public interface LostFilmService {
     Observable<String> getTvShowHash(@Query("c") int tvShowId,
                                      @Query("s") String seasonId,
                                      @Query("e") String episodeId);
+
+    @GET("http://retre.org/")
+    Observable<DownloadLink[]> getTvShowDownloadLink(@Query("c") int tvShowId,
+                                                     @Query("s") String seasonId,
+                                                     @Query("e") String episodeId,
+                                                     @Query("h") String hash,
+                                                     @Query("u") String userId);
 }

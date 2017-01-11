@@ -8,6 +8,7 @@ import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
 
 import com.crazydude.common.api.DatabaseManager;
+import com.crazydude.common.api.Episode;
 import com.crazydude.common.api.Season;
 import com.crazydude.common.api.TvShow;
 
@@ -30,6 +31,7 @@ public class TvShowFragment extends BrowseFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDatabaseManager = new DatabaseManager();
+        setupUI();
     }
 
     @Override
@@ -38,12 +40,19 @@ public class TvShowFragment extends BrowseFragment {
         mDatabaseManager.close();
     }
 
+    private void setupUI() {
+        setHeadersState(HEADERS_DISABLED);
+    }
+
     private void loadData() {
         TvShow tvShow = mDatabaseManager.getTvShow(mTvShowId);
         mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
         for (Season season : tvShow.getSeasons()) {
             ArrayObjectAdapter episodeAdapter = new ArrayObjectAdapter(new EpisodePresenter());
             episodeAdapter.addAll(0, season.getEpisodes());
+            if (season.isHasFullSeasonDownloadUrl()) {
+                episodeAdapter.add(new Episode("99", getString(R.string.full_season)));
+            }
             mCategoriesAdapter.add(new ListRow(new HeaderItem(getString(R.string.season, season.getId())), episodeAdapter));
         }
         setAdapter(mCategoriesAdapter);

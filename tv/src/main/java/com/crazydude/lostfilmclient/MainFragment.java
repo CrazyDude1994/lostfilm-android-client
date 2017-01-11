@@ -1,5 +1,6 @@
 package com.crazydude.lostfilmclient;
 
+import android.app.ActivityOptions;
 import android.app.LoaderManager;
 import android.content.Intent;
 import android.content.Loader;
@@ -56,7 +57,7 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
     public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
         Intent intent = new Intent(getActivity(), TvShowActivity.class);
         intent.putExtra(TvShowActivity.EXTRA_TVSHOW_ID, ((TvShow) item).getId());
-        startActivity(intent);
+        startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(getActivity()).toBundle());
     }
 
     @Override
@@ -114,6 +115,7 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
         super.onActivityCreated(savedInstanceState);
         mJobHelper = new JobHelper(getActivity());
         mDatabaseManager = new DatabaseManager();
+        setupUI();
         loadTvShows();
         setOnItemViewClickedListener(this);
     }
@@ -123,6 +125,9 @@ public class MainFragment extends BrowseFragment implements LoaderManager.Loader
         super.onDestroy();
         mJobHelper.close();
         mDatabaseManager.close();
+    }
+
+    private void setupUI() {
     }
 
     private void loadTvShows() {

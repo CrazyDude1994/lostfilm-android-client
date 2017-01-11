@@ -3,5 +3,6 @@
     <string name="username">Имя пользователя</string>
     <string name="password">Пароль</string>
     <string name="season">Сезон %s</string>
+    <string name="full_season">Весь сезон</string>
 
 </resources>

@@ -2,7 +2,6 @@ package com.crazydude.lostfilmclient;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.Presenter;
 import android.view.ViewGroup;
@@ -17,12 +16,10 @@ import com.crazydude.common.api.Episode;
 public class EpisodePresenter extends Presenter {
 
     private Context mContext;
-    private Drawable mDefaultCardImage;
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
         mContext = parent.getContext();
-        mDefaultCardImage = mContext.getResources().getDrawable(R.drawable.movie);
         ImageCardView cardView = new ImageCardView(mContext) {
             @Override
             public void setSelected(boolean selected) {
@@ -53,7 +50,9 @@ public class EpisodePresenter extends Presenter {
 
         Glide.with(cardView.getContext())
                 .load("")
-                .error(mDefaultCardImage)
+                .error(R.color.color_primary)
+                .placeholder(R.color.color_primary)
+                .crossFade()
                 .into(cardView.getMainImageView());
     }
 

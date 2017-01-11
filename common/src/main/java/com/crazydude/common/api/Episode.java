@@ -1,7 +1,6 @@
 package com.crazydude.common.api;
 
 import io.realm.RealmObject;
-import io.realm.annotations.PrimaryKey;
 
 /**
  * Created by Crazy on 10.01.2017.
@@ -9,7 +8,6 @@ import io.realm.annotations.PrimaryKey;
 
 public class Episode extends RealmObject {
 
-    @PrimaryKey
     private String mId;
     private String mName;
 

@@ -2,7 +2,6 @@ package com.crazydude.common.api;
 
 import io.realm.RealmList;
 import io.realm.RealmObject;
-import io.realm.annotations.PrimaryKey;
 
 /**
  * Created by Crazy on 10.01.2017.
@@ -11,7 +10,6 @@ import io.realm.annotations.PrimaryKey;
 public class Season extends RealmObject {
 
     RealmList<Episode> mEpisodes;
-    @PrimaryKey
     private String mId;
     private boolean mHasFullSeasonDownloadUrl;
 

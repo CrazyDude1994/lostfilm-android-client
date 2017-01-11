@@ -1,12 +1,7 @@
 <resources>
     <string name="app_name">LostFilm.tv</string>
-    <string name="login">Войти</string>
     <string name="username">Имя пользователя</string>
     <string name="password">Пароль</string>
     <string name="season">Сезон %s</string>
 
-    <string-array name="categories">
-        <item>По алфавиту</item>
-        <item>По жанру</item>
-    </string-array>
 </resources>

@@ -67,7 +67,7 @@ public class DatabaseManager {
                 TvShow tvShowRealm = realm.where(TvShow.class)
                         .equalTo("mId", tvShow.getId())
                         .findFirst();
-                List<Season> seasons = realm.copyToRealmOrUpdate(tvShow.getSeasons());
+                List<Season> seasons = realm.copyToRealm(tvShow.getSeasons());
                 tvShowRealm.setSeasons(new RealmList<Season>());
                 tvShowRealm.getSeasons().addAll(seasons);
                 tvShowRealm.setImageUrl(tvShow.getImageUrl());

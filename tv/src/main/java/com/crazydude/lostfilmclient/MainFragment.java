@@ -37,7 +37,6 @@ import rx.Subscription;
 
 public class MainFragment extends BrowseFragment implements OnItemViewClickedListener, Observer<TvShow[]> {
 
-    private static final int TV_SHOWS_LOADER = 0;
     private ArrayObjectAdapter mCategoriesAdapter;
     private JobHelper mJobHelper;
     private DatabaseManager mDatabaseManager;
@@ -55,6 +54,26 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
                     tvShowAdapter.replace(j, tvShow);
                 }
             }
+        }
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mJobHelper = new JobHelper(getActivity());
+        mDatabaseManager = new DatabaseManager();
+        mLostFilmApi = LostFilmApi.getInstance();
+        setupUI();
+        setOnItemViewClickedListener(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mJobHelper.close();
+        mDatabaseManager.close();
+        if (mSubscription != null) {
+            mSubscription.unsubscribe();
         }
     }
 
@@ -88,7 +107,6 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         }
         mCategoriesAdapter.add(new ListRow(new HeaderItem(lastChar.toUpperCase()), adapter));
         setAdapter(mCategoriesAdapter);
-        mJobHelper.scheduleBannerUpdate();
     }
 
     @Override
@@ -107,34 +125,16 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
     @Override
     public void onResume() {
         super.onResume();
-        EventBus.getDefault().register(this);
         if (!Utils.hasSession()) {
             startActivity(new Intent(getActivity(), LoginActivity.class));
+        } else {
+            mJobHelper.scheduleBannerUpdate();
         }
-        loadTvShows();
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mJobHelper = new JobHelper(getActivity());
-        mDatabaseManager = new DatabaseManager();
-        mLostFilmApi = LostFilmApi.getInstance();
-        setupUI();
-        setOnItemViewClickedListener(this);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mJobHelper.close();
-        mDatabaseManager.close();
-        if (mSubscription != null) {
-            mSubscription.unsubscribe();
-        }
+        EventBus.getDefault().register(this);
     }
 
     private void setupUI() {
+        loadTvShows();
     }
 
     private void loadTvShows() {

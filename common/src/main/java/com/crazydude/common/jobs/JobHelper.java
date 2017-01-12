@@ -1,9 +1,12 @@
-package com.crazydude.common.api;
+package com.crazydude.common.jobs;
 
 import android.content.Context;
 
 import com.birbit.android.jobqueue.JobManager;
 import com.birbit.android.jobqueue.config.Configuration;
+import com.crazydude.common.db.DatabaseManager;
+import com.crazydude.common.db.models.TvShow;
+import com.crazydude.common.utils.Utils;
 
 import java.util.List;
 

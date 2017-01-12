@@ -5,7 +5,7 @@
 
     <fragment
         android:id="@+id/fragment_tv_show"
-        android:name="com.crazydude.lostfilmclient.TvShowFragment"
+        android:name="com.crazydude.lostfilmclient.fragments.TvShowFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 

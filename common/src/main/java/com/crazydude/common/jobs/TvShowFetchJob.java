@@ -1,4 +1,4 @@
-package com.crazydude.common.api;
+package com.crazydude.common.jobs;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -6,6 +6,9 @@ import android.support.annotation.Nullable;
 import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
 import com.birbit.android.jobqueue.RetryConstraint;
+import com.crazydude.common.api.LostFilmApi;
+import com.crazydude.common.db.DatabaseManager;
+import com.crazydude.common.events.TvShowUpdateEvent;
 
 import org.greenrobot.eventbus.EventBus;
 

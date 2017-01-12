@@ -1,4 +1,4 @@
-package com.crazydude.lostfilmclient;
+package com.crazydude.lostfilmclient.fragments;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
@@ -13,10 +13,13 @@ import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 
-import com.crazydude.common.api.DatabaseManager;
-import com.crazydude.common.api.Episode;
-import com.crazydude.common.api.Season;
-import com.crazydude.common.api.TvShow;
+import com.crazydude.common.db.DatabaseManager;
+import com.crazydude.common.db.models.Episode;
+import com.crazydude.common.db.models.Season;
+import com.crazydude.common.db.models.TvShow;
+import com.crazydude.lostfilmclient.R;
+import com.crazydude.lostfilmclient.activity.PlayerActivity;
+import com.crazydude.lostfilmclient.presenters.EpisodePresenter;
 
 /**
  * Created by Crazy on 10.01.2017.

@@ -1,4 +1,4 @@
-package com.crazydude.lostfilmclient;
+package com.crazydude.lostfilmclient.fragments;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -6,6 +6,8 @@ import android.support.v17.leanback.app.GuidedStepFragment;
 import android.support.v17.leanback.widget.GuidanceStylist;
 import android.support.v17.leanback.widget.GuidedAction;
 import android.text.InputType;
+
+import com.crazydude.lostfilmclient.R;
 
 import java.util.List;
 

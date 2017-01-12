@@ -1,4 +1,7 @@
-package com.crazydude.common.api;
+package com.crazydude.common.db;
+
+import com.crazydude.common.db.models.Season;
+import com.crazydude.common.db.models.TvShow;
 
 import java.util.ArrayList;
 import java.util.List;

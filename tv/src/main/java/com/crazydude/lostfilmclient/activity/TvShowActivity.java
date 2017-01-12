@@ -1,8 +1,11 @@
-package com.crazydude.lostfilmclient;
+package com.crazydude.lostfilmclient.activity;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+
+import com.crazydude.lostfilmclient.R;
+import com.crazydude.lostfilmclient.fragments.TvShowFragment;
 
 /**
  * Created by Crazy on 10.01.2017.

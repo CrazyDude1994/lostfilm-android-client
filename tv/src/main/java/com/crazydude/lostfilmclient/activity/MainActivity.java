@@ -1,7 +1,9 @@
-package com.crazydude.lostfilmclient;
+package com.crazydude.lostfilmclient.activity;
 
 import android.app.Activity;
 import android.os.Bundle;
+
+import com.crazydude.lostfilmclient.R;
 
 /**
  * Created by Crazy on 07.01.2017.

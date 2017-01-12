@@ -1,4 +1,4 @@
-package com.crazydude.lostfilmclient;
+package com.crazydude.lostfilmclient.fragments;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
@@ -13,12 +13,15 @@ import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 
-import com.crazydude.common.api.DatabaseManager;
-import com.crazydude.common.api.JobHelper;
 import com.crazydude.common.api.LostFilmApi;
-import com.crazydude.common.api.TvShow;
-import com.crazydude.common.api.TvShowUpdateEvent;
-import com.crazydude.common.api.Utils;
+import com.crazydude.common.db.DatabaseManager;
+import com.crazydude.common.db.models.TvShow;
+import com.crazydude.common.events.TvShowUpdateEvent;
+import com.crazydude.common.jobs.JobHelper;
+import com.crazydude.common.utils.Utils;
+import com.crazydude.lostfilmclient.activity.LoginActivity;
+import com.crazydude.lostfilmclient.activity.TvShowActivity;
+import com.crazydude.lostfilmclient.presenters.TvShowPresenter;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;

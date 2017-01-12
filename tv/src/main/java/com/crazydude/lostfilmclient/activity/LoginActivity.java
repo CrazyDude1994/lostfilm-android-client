@@ -1,4 +1,4 @@
-package com.crazydude.lostfilmclient;
+package com.crazydude.lostfilmclient.activity;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -7,7 +7,8 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.crazydude.common.api.Utils;
+import com.crazydude.common.utils.Utils;
+import com.crazydude.lostfilmclient.R;
 
 /**
  * Created by Crazy on 09.01.2017.

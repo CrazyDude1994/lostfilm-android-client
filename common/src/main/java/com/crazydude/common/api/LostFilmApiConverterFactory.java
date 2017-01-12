@@ -2,6 +2,11 @@ package com.crazydude.common.api;
 
 import android.util.Log;
 
+import com.crazydude.common.db.models.DownloadLink;
+import com.crazydude.common.db.models.Episode;
+import com.crazydude.common.db.models.Season;
+import com.crazydude.common.db.models.TvShow;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;

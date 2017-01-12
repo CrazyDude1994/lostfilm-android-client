@@ -1,4 +1,4 @@
-package com.crazydude.lostfilmclient;
+package com.crazydude.lostfilmclient.activity;
 
 import android.Manifest;
 import android.app.Activity;
@@ -18,9 +18,11 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-import com.crazydude.common.api.DatabaseManager;
-import com.crazydude.common.api.DownloadLink;
 import com.crazydude.common.api.LostFilmApi;
+import com.crazydude.common.db.DatabaseManager;
+import com.crazydude.common.db.models.DownloadLink;
+import com.crazydude.lostfilmclient.R;
+import com.crazydude.lostfilmclient.presenters.DetailsPresenter;
 import com.github.se_bastiaan.torrentstream.StreamStatus;
 import com.github.se_bastiaan.torrentstream.Torrent;
 import com.github.se_bastiaan.torrentstream.TorrentOptions;

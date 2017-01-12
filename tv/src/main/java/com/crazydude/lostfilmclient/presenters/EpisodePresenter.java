@@ -1,4 +1,4 @@
-package com.crazydude.lostfilmclient;
+package com.crazydude.lostfilmclient.presenters;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -7,13 +7,14 @@ import android.support.v17.leanback.widget.Presenter;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
-import com.crazydude.common.api.TvShow;
+import com.crazydude.common.db.models.Episode;
+import com.crazydude.lostfilmclient.R;
 
 /**
  * Created by Crazy on 08.01.2017.
  */
 
-public class TvShowPresenter extends Presenter {
+public class EpisodePresenter extends Presenter {
 
     private Context mContext;
 
@@ -38,9 +39,9 @@ public class TvShowPresenter extends Presenter {
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, Object item) {
-        TvShow tvShow = (TvShow) item;
+        Episode episode = (Episode) item;
         ImageCardView cardView = (ImageCardView) viewHolder.view;
-        ((ImageCardView) viewHolder.view).setTitleText(tvShow.getName());
+        ((ImageCardView) viewHolder.view).setTitleText(episode.getName());
 
         // Set card size from dimension resources.
         Resources res = cardView.getResources();
@@ -49,10 +50,10 @@ public class TvShowPresenter extends Presenter {
         cardView.setMainImageDimensions(width, height);
 
         Glide.with(cardView.getContext())
-                .load(tvShow.getImageUrl())
-                .crossFade()
-                .placeholder(R.color.color_primary)
+                .load("")
                 .error(R.color.color_primary)
+                .placeholder(R.color.color_primary)
+                .crossFade()
                 .into(cardView.getMainImageView());
     }
 

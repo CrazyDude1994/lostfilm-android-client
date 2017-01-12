@@ -1,4 +1,4 @@
-package com.crazydude.common.api;
+package com.crazydude.common.db.models;
 
 /**
  * Created by Crazy on 11.01.2017.

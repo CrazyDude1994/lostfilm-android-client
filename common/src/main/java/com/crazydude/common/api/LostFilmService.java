@@ -1,5 +1,8 @@
 package com.crazydude.common.api;
 
+import com.crazydude.common.db.models.DownloadLink;
+import com.crazydude.common.db.models.TvShow;
+
 import retrofit2.http.GET;
 import retrofit2.http.Query;
 import rx.Observable;

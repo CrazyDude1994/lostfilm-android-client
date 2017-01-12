@@ -1,4 +1,4 @@
-package com.crazydude.common.api;
+package com.crazydude.common.db.models;
 
 import io.realm.RealmList;
 import io.realm.RealmObject;

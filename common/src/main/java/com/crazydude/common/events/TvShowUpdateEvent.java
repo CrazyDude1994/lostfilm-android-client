@@ -1,4 +1,4 @@
-package com.crazydude.common.api;
+package com.crazydude.common.events;
 
 /**
  * Created by Crazy on 09.01.2017.

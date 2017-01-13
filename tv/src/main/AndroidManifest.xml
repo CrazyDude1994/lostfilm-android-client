@@ -17,7 +17,8 @@
     <application
         android:name=".TvApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:banner="@drawable/logo"
+        android:icon="@drawable/logo"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/MainTheme">
@@ -35,11 +36,7 @@
 
         <activity android:name=".activity.LoginActivity"/>
         <activity android:name=".activity.TvShowActivity"/>
-        <activity android:name=".activity.PlayerActivity"/><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
-     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
-        <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version"/>
+        <activity android:name=".activity.PlayerActivity"/>
     </application>
 
 </manifest>

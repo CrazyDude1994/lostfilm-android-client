@@ -10,8 +10,10 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.v17.leanback.app.VideoFragment;
 import android.support.v17.leanback.app.VideoFragmentGlueHost;
+import android.support.v17.leanback.widget.Action;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.ControlButtonPresenterSelector;
+import android.support.v17.leanback.widget.OnActionClickedListener;
 import android.support.v17.leanback.widget.PlaybackControlsRow;
 import android.support.v17.leanback.widget.PlaybackControlsRowPresenter;
 import android.support.v4.app.ActivityCompat;
@@ -62,7 +64,7 @@ import rx.schedulers.Schedulers;
  * Created by Crazy on 11.01.2017.
  */
 
-public class PlayerActivity extends Activity implements Observer<DownloadLink[]>, SurfaceHolder.Callback {
+public class PlayerActivity extends Activity implements Observer<DownloadLink[]>, SurfaceHolder.Callback, OnActionClickedListener {
 
     public static final String EXTRA_EPISODE_ID = "extra_episode_id";
     public static final String EXTRA_SEASON_ID = "extra_season_id";
@@ -81,6 +83,18 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     private SimpleExoPlayer mPlayer;
     private PlaybackControlsRow mControlsRow;
     private VideoFragmentGlueHost mGlue;
+    private PlaybackControlsRow.PlayPauseAction mPlayPauseAction;
+
+    @Override
+    public void onActionClicked(Action action) {
+        if (action == mPlayPauseAction) {
+            mPlayPauseAction.nextIndex();
+            if (mPlayer != null) {
+                mPlayer.setPlayWhenReady(mPlayPauseAction.getIndex() == PlaybackControlsRow.PlayPauseAction.PAUSE);
+            }
+            mGlue.notifyPlaybackRowChanged();
+        }
+    }
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
@@ -104,7 +118,6 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
 
     @Override
     public void onError(Throwable e) {
-
     }
 
     @Override
@@ -184,13 +197,15 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
         VideoFragment videoFragment = (VideoFragment) getFragmentManager().findFragmentById(R.id.video_fragment);
         mGlue = new VideoFragmentGlueHost(videoFragment);
         mGlue.setSurfaceHolderCallback(this);
+        mGlue.setOnActionClickedListener(this);
 
         mControlsRow = new PlaybackControlsRow(mSelectedLink);
 
         ArrayObjectAdapter adapter = new ArrayObjectAdapter(new ControlButtonPresenterSelector());
-        PlaybackControlsRow.PlayPauseAction playPauseAction = new PlaybackControlsRow.PlayPauseAction(this);
+        mPlayPauseAction = new PlaybackControlsRow.PlayPauseAction(this);
+        mPlayPauseAction.nextIndex(); // set to play
         adapter.add(new PlaybackControlsRow.RewindAction(this));
-        adapter.add(playPauseAction);
+        adapter.add(mPlayPauseAction);
         adapter.add(new PlaybackControlsRow.FastForwardAction(this));
         mControlsRow.setPrimaryActionsAdapter(adapter);
 
@@ -243,6 +258,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
                 MediaSource mediaSource = new ExtractorMediaSource(Uri.fromFile(torrent.getVideoFile()), dataSourceFactory,
                         new DefaultExtractorsFactory(), null, null);
                 mPlayer.prepare(mediaSource);
+                mPlayer.setPlayWhenReady(mPlayPauseAction.getIndex() == PlaybackControlsRow.PlayPauseAction.PAUSE);
                 mPlayer.addListener(new ExoPlayer.EventListener() {
                     @Override
                     public void onTimelineChanged(Timeline timeline, Object manifest) {
@@ -276,7 +292,6 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
 
                     }
                 });
-                mPlayer.setPlayWhenReady(true);
                 Observable.interval(1, TimeUnit.SECONDS)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribeOn(Schedulers.io())
@@ -284,7 +299,6 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
                         .subscribe(aLong -> {
                             if (mPlayer != null) {
                                 mControlsRow.setCurrentTimeLong(mPlayer.getCurrentPosition());
-                                mControlsRow.setBufferedProgressLong(mPlayer.getBufferedPosition());
                                 mGlue.notifyPlaybackRowChanged();
                             }
                         });
@@ -292,7 +306,10 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
 
             @Override
             public void onStreamProgress(Torrent torrent, StreamStatus streamStatus) {
-
+                if (mPlayer != null && mPlayer.getDuration() > 0) {
+                    mControlsRow.setBufferedProgressLong((long) ((streamStatus.progress / 100) * mPlayer.getDuration()));
+                    mGlue.notifyPlaybackRowChanged();
+                }
             }
 
             @Override

@@ -4,5 +4,8 @@
     <string name="password">Пароль</string>
     <string name="season">Сезон %s</string>
     <string name="full_season">Весь сезон</string>
+    <string name="welcome">Добро пожаловать</string>
+    <string name="lost_film_info">LostFilm.TV</string>
+    <string name="login_info">Войдите для доступа к просмотру</string>
 
 </resources>

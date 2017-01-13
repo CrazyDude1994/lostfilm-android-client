@@ -20,7 +20,7 @@ public class LoginFragment extends GuidedStepFragment {
     @NonNull
     @Override
     public GuidanceStylist.Guidance onCreateGuidance(Bundle savedInstanceState) {
-        return new GuidanceStylist.Guidance("Hi", "", "", getActivity().getDrawable(R.drawable.app_icon_quantum));
+        return new GuidanceStylist.Guidance("Hi", "", "", getActivity().getDrawable(R.drawable.logo));
     }
 
     @Override

@@ -3,15 +3,18 @@ package com.crazydude.lostfilmclient.fragments;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
 import android.support.v17.leanback.widget.OnItemViewClickedListener;
+import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
+import android.util.DisplayMetrics;
 
 import com.crazydude.common.api.LostFilmApi;
 import com.crazydude.common.db.DatabaseManager;
@@ -19,6 +22,7 @@ import com.crazydude.common.db.models.TvShow;
 import com.crazydude.common.events.TvShowUpdateEvent;
 import com.crazydude.common.jobs.JobHelper;
 import com.crazydude.common.utils.Utils;
+import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.activity.LoginActivity;
 import com.crazydude.lostfilmclient.activity.TvShowActivity;
 import com.crazydude.lostfilmclient.presenters.TvShowPresenter;
@@ -38,13 +42,15 @@ import rx.Subscription;
  * Created by Crazy on 08.01.2017.
  */
 
-public class MainFragment extends BrowseFragment implements OnItemViewClickedListener, Observer<TvShow[]> {
+public class MainFragment extends BrowseFragment implements OnItemViewClickedListener, Observer<TvShow[]>, OnItemViewSelectedListener {
 
     private ArrayObjectAdapter mCategoriesAdapter;
     private JobHelper mJobHelper;
     private DatabaseManager mDatabaseManager;
     private LostFilmApi mLostFilmApi;
     private Subscription mSubscription;
+    private BackgroundManager mBackgroundManager;
+    private DisplayMetrics mMetrics;
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdate(TvShowUpdateEvent event) {
@@ -61,13 +67,33 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
     }
 
     @Override
+    public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
+/*        if (item instanceof TvShow) {
+            int width = mMetrics.widthPixels;
+            int height = mMetrics.heightPixels;
+            Glide.with(this)
+                    .load(((TvShow) item).getImageUrl())
+                    .asBitmap()
+                    .centerCrop()
+                    .into(new SimpleTarget<Bitmap>(width, height) {
+                        @Override
+                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap>
+                                glideAnimation) {
+                        }
+                    });
+        }*/
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mJobHelper = new JobHelper(getActivity());
         mDatabaseManager = new DatabaseManager();
         mLostFilmApi = LostFilmApi.getInstance();
+        prepareBackgroundManager();
         setupUI();
         setOnItemViewClickedListener(this);
+        setOnItemViewSelectedListener(this);
     }
 
     @Override
@@ -75,6 +101,7 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         super.onDestroy();
         mJobHelper.close();
         mDatabaseManager.close();
+        mBackgroundManager.release();
         if (mSubscription != null) {
             mSubscription.unsubscribe();
         }
@@ -136,7 +163,15 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         EventBus.getDefault().register(this);
     }
 
+    private void prepareBackgroundManager() {
+        mBackgroundManager = BackgroundManager.getInstance(getActivity());
+        mBackgroundManager.attach(getActivity().getWindow());
+        mMetrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
+    }
+
     private void setupUI() {
+        setBadgeDrawable(getResources().getDrawable(R.drawable.logo, null));
         loadTvShows();
     }
 

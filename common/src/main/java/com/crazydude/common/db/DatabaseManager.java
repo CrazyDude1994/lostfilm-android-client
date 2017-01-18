@@ -1,5 +1,6 @@
 package com.crazydude.common.db;
 
+import com.crazydude.common.db.models.Episode;
 import com.crazydude.common.db.models.Season;
 import com.crazydude.common.db.models.TvShow;
 
@@ -58,6 +59,15 @@ public class DatabaseManager {
             shows.add(new TvShow(tvShow.getId(), tvShow.getName(), tvShow.getImageUrl(), tvShow.getSeasons()));
         }
         return shows;
+    }
+
+    public List<Episode> getOutdatedTvShowEpisodes(int id) {
+        RealmResults<Episode> all = mRealm.where(Episode.class)
+                .equalTo("mPosterUrl", (String) null)
+                .equalTo("mSeason.mTvShow.mId", id)
+                .findAll();
+
+        return new ArrayList<>(all);
     }
 
     public void updateTvShow(final TvShow tvShow) {

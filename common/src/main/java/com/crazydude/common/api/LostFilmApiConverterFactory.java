@@ -62,14 +62,18 @@ public class LostFilmApiConverterFactory extends Converter.Factory {
                     Elements episodes = document.getElementsByClass("t_episode_title");
                     TvShow tvShow = new TvShow(null, null, null, new RealmList<Season>());
                     Pattern pattern = Pattern.compile("ShowAllReleases\\('.+','(.+)','(.+)'\\)");
+                    Pattern detailsPattern = Pattern.compile("id=(\\d+)");
                     Season season = null;
                     for (Element episode : episodes) {
                         String episodeName = episode.child(0).child(0).text();
                         String episodeInfo = episode.attr("onclick");
+                        String episodeDetail = episode.parent().getElementsByClass("a_details").get(0).attr("href");
                         Matcher matcher = pattern.matcher(episodeInfo);
-                        if (matcher.find()) {
+                        Matcher detailsMatcher = detailsPattern.matcher(episodeDetail);
+                        if (matcher.find() && detailsMatcher.find()) {
                             String seasonNumber = matcher.group(1);
                             String episodeNumber = matcher.group(2);
+                            int detailsId = Integer.parseInt(detailsMatcher.group(1));
 
                             if (season != null && !season.getId().equals(seasonNumber)) {
                                 season = null;
@@ -81,7 +85,7 @@ public class LostFilmApiConverterFactory extends Converter.Factory {
                             }
 
                             if (!episodeNumber.equals("99")) {
-                                season.getEpisodes().add(new Episode(episodeNumber, episodeName, season));
+                                season.getEpisodes().add(new Episode(episodeNumber, episodeName, season, detailsId, null));
                             }
                         } else {
                             Log.e("Parser", episodeInfo);

@@ -11,14 +11,18 @@ public class Episode extends RealmObject {
     private String mId;
     private String mName;
     private Season mSeason;
+    private int detailsId;
+    private String mPosterUrl;
 
     public Episode() {
     }
 
-    public Episode(String id, String name, Season season) {
+    public Episode(String id, String name, Season season, int detailsId, String posterUrl) {
         mId = id;
         mName = name;
         mSeason = season;
+        this.detailsId = detailsId;
+        mPosterUrl = posterUrl;
     }
 
     public String getId() {
@@ -43,5 +47,21 @@ public class Episode extends RealmObject {
 
     public void setSeason(Season season) {
         mSeason = season;
+    }
+
+    public int getDetailsId() {
+        return detailsId;
+    }
+
+    public void setDetailsId(int detailsId) {
+        this.detailsId = detailsId;
+    }
+
+    public String getPosterUrl() {
+        return mPosterUrl;
+    }
+
+    public void setPosterUrl(String posterUrl) {
+        mPosterUrl = posterUrl;
     }
 }

@@ -103,7 +103,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-
+        //Will not be called on TV devices
     }
 
     @Override

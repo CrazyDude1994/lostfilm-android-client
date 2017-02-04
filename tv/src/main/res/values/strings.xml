@@ -7,5 +7,12 @@
     <string name="welcome">Добро пожаловать</string>
     <string name="lost_film_info">LostFilm.TV</string>
     <string name="login_info">Войдите для доступа к просмотру</string>
+    <string name="login_fragment_title">LostFilm.TV</string>
+    <string name="login_fragment_description">Для просмотра сериалов введите ваши данные аккаунта</string>
+    <string name="email">Email</string>
+    <string name="login">Войти</string>
+    <string name="wrong_login_or_password">Не правильный логин или пароль</string>
+    <string name="enter_login">Введите ваши данные</string>
+    <string name="welcome_login">Добро пожаловать %s</string>
 
 </resources>

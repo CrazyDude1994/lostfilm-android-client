@@ -1,20 +1,10 @@
 package com.crazydude.lostfilmclient;
 
-import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.widget.VideoView;
 
-import com.github.se_bastiaan.torrentstream.StreamStatus;
-import com.github.se_bastiaan.torrentstream.Torrent;
-import com.github.se_bastiaan.torrentstream.TorrentOptions;
-import com.github.se_bastiaan.torrentstream.TorrentStream;
-import com.github.se_bastiaan.torrentstream.listeners.TorrentListener;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
@@ -33,9 +23,6 @@ import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 
-import java.io.File;
-import java.io.IOException;
-
 public class MainActivity extends AppCompatActivity {
 
     private boolean isPlaying = false;
@@ -44,69 +31,27 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (!isPlaying) {
+            Handler mainHandler = new Handler();
+            BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
+            TrackSelection.Factory videoTrackSelectionFactory =
+                    new AdaptiveVideoTrackSelection.Factory(bandwidthMeter);
+            TrackSelector trackSelector =
+                    new DefaultTrackSelector(videoTrackSelectionFactory);
 
-        TorrentOptions torrentOptions = new TorrentOptions.Builder()
-                .saveLocation(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
-                .removeFilesAfterStop(true)
-                .build();
+            LoadControl loadControl = new DefaultLoadControl();
 
-        TorrentStream torrentStream = TorrentStream.init(torrentOptions);
-        torrentStream.addListener(new TorrentListener() {
-            @Override
-            public void onStreamPrepared(Torrent torrent) {
-                Log.d("Torrent", "Prepared");
-                torrent.getTorrentHandle().setSequentialDownload(true);
-                torrent.startDownload();
-            }
+            SimpleExoPlayer player =
+                    ExoPlayerFactory.newSimpleInstance(MainActivity.this, trackSelector, loadControl);
+            SimpleExoPlayerView playerView = (SimpleExoPlayerView) findViewById(R.id.videoView);
+            playerView.setPlayer(player);
+            DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(MainActivity.this,
+                    Util.getUserAgent(MainActivity.this, "yourApplicationName"));
+            MediaSource mediaSource = new ExtractorMediaSource(Uri.parse("https://r7---sn-3c27ln7k.googlevideo.com/videoplayback?id=6fb497d0971b8cdf&itag=22&source=picasa&begin=0&requiressl=yes&mm=30&mn=sn-3c27ln7k&ms=nxu&mv=m&nh=IgphcjAzLmticDAxKgkxMjcuMC4wLjE&pl=22&sc=yes&mime=video/mp4&lmt=1486083166327499&mt=1486135406&ip=134.249.158.189&ipbits=8&expire=1486164239&sparams=ip,ipbits,expire,id,itag,source,requiressl,mm,mn,ms,mv,nh,pl,sc,mime,lmt&signature=3BB06D8D4294F8C49B3CE910B3D6849954302BB1.02ABE00700DFCEF715E72D0EFB73B67841E659F8&key=ck2&ratebypass=yes&title=%5BAnime365%5D%20Kuzu%20no%20Honkai%20-%2004%20(t1174045)"), dataSourceFactory,
+                    new DefaultExtractorsFactory(), null, null);
+            player.prepare(mediaSource);
+            player.setPlayWhenReady(true);
 
-            @Override
-            public void onStreamStarted(Torrent torrent) {
-                Log.d("Torrent", "Started");
-            }
-
-            @Override
-            public void onStreamError(Torrent torrent, Exception e) {
-                Log.d("Torrent", "Error: " + e.getMessage());
-            }
-
-            @Override
-            public void onStreamReady(Torrent torrent) {
-                Log.d("Torrent", "Ready");
-                torrent.getTorrentHandle().setSequentialDownload(true);
-                if (!isPlaying) {
-                    Handler mainHandler = new Handler();
-                    BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
-                    TrackSelection.Factory videoTrackSelectionFactory =
-                            new AdaptiveVideoTrackSelection.Factory(bandwidthMeter);
-                    TrackSelector trackSelector =
-                            new DefaultTrackSelector(videoTrackSelectionFactory);
-
-                    LoadControl loadControl = new DefaultLoadControl();
-
-                    SimpleExoPlayer player =
-                            ExoPlayerFactory.newSimpleInstance(MainActivity.this, trackSelector, loadControl);
-                    SimpleExoPlayerView playerView = (SimpleExoPlayerView) findViewById(R.id.videoView);
-                    playerView.setPlayer(player);
-                    DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(MainActivity.this,
-                            Util.getUserAgent(MainActivity.this, "yourApplicationName"));
-                    MediaSource mediaSource = new ExtractorMediaSource(Uri.fromFile(torrent.getVideoFile()), dataSourceFactory,
-                            new DefaultExtractorsFactory(), null, null);
-                    player.prepare(mediaSource);
-                    player.setPlayWhenReady(true);
-                }
-            }
-
-            @Override
-            public void onStreamProgress(Torrent torrent, StreamStatus streamStatus) {
-                Log.d("Torrent", "Progress " + streamStatus.progress);
-            }
-
-            @Override
-            public void onStreamStopped() {
-                Log.d("Torrent", "Stopped");
-            }
-        });
-
-        torrentStream.startStream("http://tracktor.in/td.php?s=3rbCXJf9kkJoMhp4C1dfivsePMFJIi3NIWho6qqExGOlJ8voBea8DONzWbJpnG6n8Tt1KN3mo2ZQSK%2FK1fOtBLBr88TR8SlmBHEsfYYcV%2F0q4WtGrKQHnruUXh2bUE94dgQWmw%3D%3D");
+        }
     }
 }

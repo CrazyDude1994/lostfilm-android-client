@@ -16,6 +16,7 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
@@ -36,12 +37,16 @@ public class LostFilmApi {
         mRetrofit = new Retrofit.Builder()
                 .baseUrl("https://www.lostfilm.tv/")
                 .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
                 .addConverterFactory(LostFilmApiConverterFactory.create())
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .client(new OkHttpClient.Builder().cookieJar(new CookieJar() {
                     @Override
                     public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
-
+                        CookieManager cookieManager = CookieManager.getInstance();
+                        for (Cookie cookie : cookies) {
+                            cookieManager.setCookie(url.host(), cookie.name() + "=" + cookie.value());
+                        }
                     }
 
                     @Override
@@ -69,6 +74,19 @@ public class LostFilmApi {
 
     public Observable<TvShow[]> getTvShows() {
         return mLostFilmService.getTvShows().compose(applySchedulers());
+    }
+
+    public Observable<LoginResponse> login(String email, String password) {
+        return mLostFilmService.login("users", "login", email, password, "1")
+                .compose(applySchedulers())
+                .doOnNext(loginResponse -> {
+                    if (loginResponse.getError() != null) {
+                        if (loginResponse.getError() == 1) {
+                            return;
+                        }
+                        throw new AuthException();
+                    }
+                });
     }
 
     public Observable<TvShow> getTvShowData(int id) {

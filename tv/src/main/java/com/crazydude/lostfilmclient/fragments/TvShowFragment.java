@@ -62,7 +62,6 @@ public class TvShowFragment extends BrowseFragment implements OnItemViewClickedL
     }
 
     private void setupUI() {
-        setHeadersState(HEADERS_DISABLED);
         setOnItemViewClickedListener(this);
     }
 
@@ -73,7 +72,7 @@ public class TvShowFragment extends BrowseFragment implements OnItemViewClickedL
             ArrayObjectAdapter episodeAdapter = new ArrayObjectAdapter(new EpisodePresenter());
             episodeAdapter.addAll(0, season.getEpisodes());
             if (season.isHasFullSeasonDownloadUrl()) {
-                episodeAdapter.add(new Episode("99", getString(R.string.full_season), season));
+                episodeAdapter.add(new Episode("99", getString(R.string.full_season), season, -1, null));
             }
             mCategoriesAdapter.add(new ListRow(new HeaderItem(getString(R.string.season, season.getId())), episodeAdapter));
         }

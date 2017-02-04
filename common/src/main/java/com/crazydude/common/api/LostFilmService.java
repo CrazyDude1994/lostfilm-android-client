@@ -3,7 +3,10 @@ package com.crazydude.common.api;
 import com.crazydude.common.db.models.DownloadLink;
 import com.crazydude.common.db.models.TvShow;
 
+import retrofit2.http.Field;
+import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
+import retrofit2.http.POST;
 import retrofit2.http.Query;
 import rx.Observable;
 
@@ -12,6 +15,14 @@ import rx.Observable;
  */
 
 public interface LostFilmService {
+
+    @POST("ajaxik.php")
+    @FormUrlEncoded
+    Observable<LoginResponse> login(@Field("act") String act,
+                                    @Field("type") String type,
+                                    @Field("mail") String email,
+                                    @Field("pass") String password,
+                                    @Field("rem") String remember);
 
     @GET("serials.php")
     Observable<TvShow[]> getTvShows();

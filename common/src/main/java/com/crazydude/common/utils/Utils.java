@@ -12,12 +12,15 @@ public class Utils {
         if (!CookieManager.getInstance().hasCookies()) {
             return false;
         }
-        String[] cookies = CookieManager.getInstance().getCookie("http://lostfilm.tv").split(";");
-        for (String cookie : cookies) {
-            String name = cookie.split("=")[0].trim();
-            String value = cookie.split("=")[1].trim();
-            if (name.equals("uid")) {
-                return true;
+        String cookies = CookieManager.getInstance().getCookie("www.lostfilm.tv");
+        if (cookies != null) {
+            String[] cookieList = cookies.split(";");
+            for (String cookie : cookieList) {
+                String name = cookie.split("=")[0].trim();
+                String value = cookie.split("=")[1].trim();
+                if (name.equals("lf_session")) {
+                    return true;
+                }
             }
         }
 

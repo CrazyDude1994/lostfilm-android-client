@@ -33,12 +33,15 @@ public class LostFilmApi {
     private Retrofit mRetrofit;
     private LostFilmService mLostFilmService;
 
+    public enum SearchType {
+        RATING, NAME, DATE;
+    }
+
     private LostFilmApi() {
         mRetrofit = new Retrofit.Builder()
                 .baseUrl("https://www.lostfilm.tv/")
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
-                .addConverterFactory(LostFilmApiConverterFactory.create())
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .client(new OkHttpClient.Builder().cookieJar(new CookieJar() {
                     @Override
@@ -72,8 +75,9 @@ public class LostFilmApi {
         return mLostFilmApi;
     }
 
-    public Observable<TvShow[]> getTvShows() {
-        return mLostFilmService.getTvShows().compose(applySchedulers());
+    public Observable<List<TvShowsResponse.TvShow>> getTvShows(int offset, SearchType searchType) {
+        return mLostFilmService.getTvShows("serial", "search", offset, searchType.ordinal() + 1, 0)
+                .map(TvShowsResponse::getData);
     }
 
     public Observable<LoginResponse> login(String email, String password) {
@@ -94,7 +98,7 @@ public class LostFilmApi {
     }
 
     public Observable<DownloadLink[]> getTvShowDownloadLink(int tvShowId, String seasonId, String episodeId) {
-        return mLostFilmService.getTvShowHash(tvShowId, seasonId, episodeId)
+        return mLostFilmService.getTvShowHash(tvShowId, seasonId, episodeId).compose(applySchedulers())
                 .flatMap(new Func1<String, Observable<DownloadLink[]>>() {
                     @Override
                     public Observable<DownloadLink[]> call(String response) {
@@ -110,7 +114,7 @@ public class LostFilmApi {
                             return null;
                         }
                     }
-                }).compose(applySchedulers());
+                });
     }
 
     <T> Observable.Transformer<T, T> applySchedulers() {

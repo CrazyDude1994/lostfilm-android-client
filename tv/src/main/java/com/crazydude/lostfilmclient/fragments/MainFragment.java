@@ -16,7 +16,6 @@ import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.util.DisplayMetrics;
 
-import com.crazydude.common.api.LostFilmApi;
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.TvShow;
 import com.crazydude.common.events.TvShowUpdateEvent;
@@ -31,36 +30,47 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-
-import rx.Observer;
-import rx.Subscription;
+import java.util.Map;
 
 /**
  * Created by Crazy on 08.01.2017.
  */
 
-public class MainFragment extends BrowseFragment implements OnItemViewClickedListener, Observer<TvShow[]>, OnItemViewSelectedListener {
+public class MainFragment extends BrowseFragment implements OnItemViewClickedListener, OnItemViewSelectedListener {
 
     private ArrayObjectAdapter mCategoriesAdapter;
     private JobHelper mJobHelper;
     private DatabaseManager mDatabaseManager;
-    private LostFilmApi mLostFilmApi;
-    private Subscription mSubscription;
     private BackgroundManager mBackgroundManager;
     private DisplayMetrics mMetrics;
+    private Map<String, ArrayObjectAdapter> mAlphabetAdapterMap = new HashMap<>();
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdate(TvShowUpdateEvent event) {
-        TvShow tvShow = mDatabaseManager.getTvShow(event.getId());
-        ArrayObjectAdapter adapter = (ArrayObjectAdapter) getAdapter();
-        for (int i = 0; i < adapter.size(); i++) {
-            ArrayObjectAdapter tvShowAdapter = (ArrayObjectAdapter) ((ListRow) adapter.get(i)).getAdapter();
-            for (int j = 0; j < tvShowAdapter.size(); j++) {
-                if (((TvShow) tvShowAdapter.get(j)).getId() == event.getId()) {
-                    tvShowAdapter.replace(j, tvShow);
+        List<TvShow> tvShows = mDatabaseManager.getTvShows(event.getTvShows());
+
+        for (TvShow tvShow : tvShows) {
+            String firstLetter = tvShow.getTitle().substring(0, 1).toUpperCase();
+            if (!mAlphabetAdapterMap.containsKey(firstLetter)) {
+                ArrayObjectAdapter tvShowsAdapter = new ArrayObjectAdapter(new TvShowPresenter());
+                tvShowsAdapter.add(tvShow);
+                mAlphabetAdapterMap.put(firstLetter, tvShowsAdapter);
+                mCategoriesAdapter.add(new ListRow(new HeaderItem(firstLetter), tvShowsAdapter));
+            } else {
+                ArrayObjectAdapter tvShowsAdapter = mAlphabetAdapterMap.get(firstLetter);
+                boolean found = false;
+                for (int i = 0; i < tvShowsAdapter.size(); i++) {
+                    if (((TvShow) tvShowsAdapter.get(i)).getId() == tvShow.getId()) {
+                        found = true;
+                        tvShowsAdapter.notifyItemRangeChanged(i, 1);
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    tvShowsAdapter.add(tvShow);
                 }
             }
         }
@@ -89,7 +99,8 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         super.onCreate(savedInstanceState);
         mJobHelper = new JobHelper(getActivity());
         mDatabaseManager = new DatabaseManager();
-        mLostFilmApi = LostFilmApi.getInstance();
+        mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+        setAdapter(mCategoriesAdapter);
         prepareBackgroundManager();
         setupUI();
         setOnItemViewClickedListener(this);
@@ -102,41 +113,6 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         mJobHelper.close();
         mDatabaseManager.close();
         mBackgroundManager.release();
-        if (mSubscription != null) {
-            mSubscription.unsubscribe();
-        }
-    }
-
-    @Override
-    public void onCompleted() {
-
-    }
-
-    @Override
-    public void onError(Throwable e) {
-
-    }
-
-    @Override
-    public void onNext(TvShow[] tvShows) {
-        ArrayList<TvShow> shows = new ArrayList<>(Arrays.asList(tvShows));
-        List<TvShow> tvShowsManaged = mDatabaseManager.updateTvShows(shows);
-
-        mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        String lastChar = "";
-        ArrayObjectAdapter adapter = null;
-        for (TvShow show : tvShowsManaged) {
-            if (!lastChar.equalsIgnoreCase(show.getName().substring(0, 1))) {
-                if (adapter != null) {
-                    mCategoriesAdapter.add(new ListRow(new HeaderItem(lastChar.toUpperCase()), adapter));
-                }
-                adapter = new ArrayObjectAdapter(new TvShowPresenter());
-                lastChar = show.getName().substring(0, 1);
-            }
-            adapter.add(show);
-        }
-        mCategoriesAdapter.add(new ListRow(new HeaderItem(lastChar.toUpperCase()), adapter));
-        setAdapter(mCategoriesAdapter);
     }
 
     @Override
@@ -158,7 +134,7 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         if (!Utils.hasSession()) {
             startActivity(new Intent(getActivity(), LoginActivity.class));
         } else {
-            mJobHelper.scheduleBannerUpdate();
+            loadTvShows();
         }
         EventBus.getDefault().register(this);
     }
@@ -176,6 +152,6 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
     }
 
     private void loadTvShows() {
-        mSubscription = mLostFilmApi.getTvShows().subscribe(this);
+        mJobHelper.scheduleTvShowsUpdate();
     }
 }

@@ -24,8 +24,13 @@ public interface LostFilmService {
                                     @Field("pass") String password,
                                     @Field("rem") String remember);
 
-    @GET("serials.php")
-    Observable<TvShow[]> getTvShows();
+    @POST("ajaxik.php")
+    @FormUrlEncoded
+    Observable<TvShowsResponse> getTvShows(@Field("act") String act,
+                                           @Field("type") String type,
+                                           @Field("o") int offset,
+                                           @Field("s") int searchType,
+                                           @Field("t") int t);
 
     @GET("browse.php")
     Observable<TvShow> getTvShow(@Query("cat") int id);

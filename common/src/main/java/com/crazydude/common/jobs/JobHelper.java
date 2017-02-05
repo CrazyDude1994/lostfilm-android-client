@@ -6,8 +6,6 @@ import com.birbit.android.jobqueue.JobManager;
 import com.birbit.android.jobqueue.config.Configuration;
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.Episode;
-import com.crazydude.common.db.models.TvShow;
-import com.crazydude.common.utils.Utils;
 
 import java.util.List;
 
@@ -29,22 +27,15 @@ public class JobHelper {
         mDatabaseManager = new DatabaseManager();
     }
 
-    public void scheduleBannerUpdate() {
-        if (!Utils.hasSession()) {
-            return;
-        }
-        List<TvShow> tvShows = mDatabaseManager.getBannerlessTvShows();
-
-        for (TvShow tvShow : tvShows) {
-            mJobManager.addJobInBackground(new TvShowFetchJob(tvShow.getId()));
-        }
-    }
-
     public void scheduleTvShowEpisodeDetailsUpdate(int id) {
         List<Episode> episodes = mDatabaseManager.getOutdatedTvShowEpisodes(id);
         for (Episode episode : episodes) {
             mJobManager.addJobInBackground(new EpisodeDetailsFetchJob(episode.getDetailsId()));
         }
+    }
+
+    public void scheduleTvShowsUpdate() {
+        mJobManager.addJobInBackground(new TvShowDatabaseFetchJob());
     }
 
     public void close() {

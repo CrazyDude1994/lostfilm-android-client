@@ -41,7 +41,7 @@ public class TvShowPresenter extends Presenter {
     public void onBindViewHolder(ViewHolder viewHolder, Object item) {
         TvShow tvShow = (TvShow) item;
         ImageCardView cardView = (ImageCardView) viewHolder.view;
-        ((ImageCardView) viewHolder.view).setTitleText(tvShow.getName());
+        ((ImageCardView) viewHolder.view).setTitleText(tvShow.getTitle());
 
         // Set card size from dimension resources.
         Resources res = cardView.getResources();
@@ -50,7 +50,7 @@ public class TvShowPresenter extends Presenter {
         cardView.setMainImageDimensions(width, height);
 
         Glide.with(cardView.getContext())
-                .load(tvShow.getImageUrl())
+                .load(tvShow.getImage())
                 .crossFade()
                 .placeholder(R.color.color_primary)
                 .error(R.color.color_primary)

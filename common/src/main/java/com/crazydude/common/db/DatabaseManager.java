@@ -25,7 +25,33 @@ public class DatabaseManager {
     public void updateTvShows(final List<TvShowsResponse.TvShow> tvShows) {
         mRealm.executeTransaction(realm -> {
             for (TvShowsResponse.TvShow show : tvShows) {
-                realm.copyToRealmOrUpdate(new TvShow(show));
+                TvShow tvShow = realm.where(TvShow.class)
+                        .equalTo("mId", show.getId())
+                        .findFirst();
+
+                if (tvShow == null) {
+                    realm.copyToRealm(new TvShow(show));
+                } else {
+                    TvShow updatedTvShow = new TvShow(show);
+                    updatedTvShow.setSeasons(tvShow.getSeasons());
+                    realm.copyToRealmOrUpdate(updatedTvShow);
+                }
+            }
+        });
+    }
+
+    public void updateTvShow(TvShowsResponse.TvShow tvShow) {
+        mRealm.executeTransaction(realm -> {
+            TvShow show = realm.where(TvShow.class)
+                    .equalTo("mId", tvShow.getId())
+                    .findFirst();
+
+            if (show == null) {
+                realm.copyToRealm(new TvShow(tvShow));
+            } else {
+                TvShow updatedTvShow = new TvShow(tvShow);
+                updatedTvShow.setSeasons(show.getSeasons());
+                realm.copyToRealmOrUpdate(updatedTvShow);
             }
         });
     }

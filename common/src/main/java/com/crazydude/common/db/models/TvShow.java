@@ -36,13 +36,12 @@ public class TvShow extends RealmObject {
         mGenres = tvShow.getGenres();
         mHasIcon = tvShow.getHasIcon();
         mHasImage = tvShow.isHasImage();
-        mImage = tvShow.getImage();
+        mImage = "http:" + tvShow.getImage();
         mLink = tvShow.getLink();
         mNotFavorited = tvShow.isNotFavorited();
         mRating = tvShow.getRating();
         mTitle = tvShow.getTitle();
         mTitleOriginal = tvShow.getTitleOriginal();
-        mSeasons = new RealmList<>();
     }
 
     public TvShow() {

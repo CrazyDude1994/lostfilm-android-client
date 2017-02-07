@@ -11,6 +11,7 @@ import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
 import android.support.v17.leanback.widget.OnItemViewClickedListener;
+import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
@@ -36,7 +37,7 @@ import io.realm.RealmChangeListener;
  * Created by Crazy on 10.01.2017.
  */
 
-public class TvShowFragment extends BrowseFragment implements OnItemViewClickedListener, RealmChangeListener<TvShow> {
+public class TvShowFragment extends BrowseFragment implements OnItemViewClickedListener, RealmChangeListener<TvShow>, OnItemViewSelectedListener {
 
     private int mTvShowId;
     private DatabaseManager mDatabaseManager;
@@ -44,6 +45,25 @@ public class TvShowFragment extends BrowseFragment implements OnItemViewClickedL
     private TvShow mTvShow;
     private BackgroundManager mBackgroundManager;
     private DisplayMetrics mMetrics;
+
+    @Override
+    public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
+        if (item instanceof Episode) {
+            int width = mMetrics.widthPixels;
+            int height = mMetrics.heightPixels;
+            Glide.with(this)
+                    .load(Utils.generatePosterUrl(mTvShowId, ((Episode) item).getSeason().getId(), ((Episode) item).getId()))
+                    .asBitmap()
+                    .centerCrop()
+                    .into(new SimpleTarget<Bitmap>(width, height) {
+                        @Override
+                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap>
+                                glideAnimation) {
+                            mBackgroundManager.setBitmap(resource);
+                        }
+                    });
+        }
+    }
 
 
     @Override
@@ -79,10 +99,10 @@ public class TvShowFragment extends BrowseFragment implements OnItemViewClickedL
     }
 
     private void setupUI() {
-        setOnItemViewClickedListener(this);
         prepareBackgroundManager();
-        loadBackground();
         loadData();
+        setOnItemViewClickedListener(this);
+        setOnItemViewSelectedListener(this);
     }
 
     private void loadData() {
@@ -110,21 +130,5 @@ public class TvShowFragment extends BrowseFragment implements OnItemViewClickedL
         mBackgroundManager.attach(getActivity().getWindow());
         mMetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
-    }
-
-    private void loadBackground() {
-        int width = mMetrics.widthPixels;
-        int height = mMetrics.heightPixels;
-        Glide.with(this)
-                .load(Utils.generatePosterUrl(mTvShowId))
-                .asBitmap()
-                .centerCrop()
-                .into(new SimpleTarget<Bitmap>(width, height) {
-                    @Override
-                    public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap>
-                            glideAnimation) {
-                        mBackgroundManager.setBitmap(resource);
-                    }
-                });
     }
 }

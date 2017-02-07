@@ -2,6 +2,7 @@ package com.crazydude.lostfilmclient.fragments;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
@@ -16,9 +17,12 @@ import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.util.DisplayMetrics;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.TvShow;
-import com.crazydude.common.events.TvShowUpdateEvent;
+import com.crazydude.common.events.TvShowsUpdateEvent;
 import com.crazydude.common.jobs.JobHelper;
 import com.crazydude.common.utils.Utils;
 import com.crazydude.lostfilmclient.R;
@@ -48,9 +52,79 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
     private Map<String, ArrayObjectAdapter> mAlphabetAdapterMap = new HashMap<>();
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onDataUpdate(TvShowUpdateEvent event) {
+    public void onDataUpdate(TvShowsUpdateEvent event) {
         List<TvShow> tvShows = mDatabaseManager.getTvShows(event.getTvShows());
 
+        updateTvShows(tvShows);
+    }
+
+    @Override
+    public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
+        if (item instanceof TvShow) {
+            int width = mMetrics.widthPixels;
+            int height = mMetrics.heightPixels;
+            Glide.with(this)
+                    .load(Utils.generatePosterUrl(((TvShow) item).getId()))
+                    .asBitmap()
+                    .centerCrop()
+                    .into(new SimpleTarget<Bitmap>(width, height) {
+                        @Override
+                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap>
+                                glideAnimation) {
+                            mBackgroundManager.setBitmap(resource);
+                        }
+                    });
+        }
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mJobHelper = new JobHelper(getActivity());
+        mDatabaseManager = new DatabaseManager();
+        mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+        setAdapter(mCategoriesAdapter);
+        prepareBackgroundManager();
+        setupUI();
+        setOnItemViewClickedListener(this);
+        setOnItemViewSelectedListener(this);
+        mJobHelper.scheduleTvShowsUpdate();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mJobHelper.close();
+        mDatabaseManager.close();
+        mBackgroundManager.release();
+    }
+
+    @Override
+    public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
+        mJobHelper.scheduleTvShowSeasonsUpdate(((TvShow) item).getId(), ((TvShow) item).getAlias());
+        Intent intent = new Intent(getActivity(), TvShowActivity.class);
+        intent.putExtra(TvShowActivity.EXTRA_TVSHOW_ID, ((TvShow) item).getId());
+        startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(getActivity()).toBundle());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        EventBus.getDefault().unregister(this);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (!Utils.hasSession()) {
+            startActivity(new Intent(getActivity(), LoginActivity.class));
+        } else {
+            loadTvShows();
+        }
+        EventBus.getDefault().register(this);
+    }
+
+    private void updateTvShows(List<TvShow> tvShows) {
         for (TvShow tvShow : tvShows) {
             String firstLetter = tvShow.getTitle().substring(0, 1).toUpperCase();
             if (!mAlphabetAdapterMap.containsKey(firstLetter)) {
@@ -76,69 +150,6 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         }
     }
 
-    @Override
-    public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
-/*        if (item instanceof TvShow) {
-            int width = mMetrics.widthPixels;
-            int height = mMetrics.heightPixels;
-            Glide.with(this)
-                    .load(((TvShow) item).getImageUrl())
-                    .asBitmap()
-                    .centerCrop()
-                    .into(new SimpleTarget<Bitmap>(width, height) {
-                        @Override
-                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap>
-                                glideAnimation) {
-                        }
-                    });
-        }*/
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mJobHelper = new JobHelper(getActivity());
-        mDatabaseManager = new DatabaseManager();
-        mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        setAdapter(mCategoriesAdapter);
-        prepareBackgroundManager();
-        setupUI();
-        setOnItemViewClickedListener(this);
-        setOnItemViewSelectedListener(this);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mJobHelper.close();
-        mDatabaseManager.close();
-        mBackgroundManager.release();
-    }
-
-    @Override
-    public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
-        Intent intent = new Intent(getActivity(), TvShowActivity.class);
-        intent.putExtra(TvShowActivity.EXTRA_TVSHOW_ID, ((TvShow) item).getId());
-        startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(getActivity()).toBundle());
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        EventBus.getDefault().unregister(this);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (!Utils.hasSession()) {
-            startActivity(new Intent(getActivity(), LoginActivity.class));
-        } else {
-            loadTvShows();
-        }
-        EventBus.getDefault().register(this);
-    }
-
     private void prepareBackgroundManager() {
         mBackgroundManager = BackgroundManager.getInstance(getActivity());
         mBackgroundManager.attach(getActivity().getWindow());
@@ -152,6 +163,7 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
     }
 
     private void loadTvShows() {
-        mJobHelper.scheduleTvShowsUpdate();
+        List<TvShow> tvShows = mDatabaseManager.getTvShows();
+        updateTvShows(tvShows);
     }
 }

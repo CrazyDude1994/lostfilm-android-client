@@ -1,26 +1,22 @@
 package com.crazydude.common.events;
 
-import com.crazydude.common.api.TvShowsResponse;
-
-import java.util.List;
-
 /**
  * Created by Crazy on 09.01.2017.
  */
 
 public class TvShowUpdateEvent {
 
-    private List<TvShowsResponse.TvShow> mTvShows;
+    private int mId;
 
-    public TvShowUpdateEvent(List<TvShowsResponse.TvShow> tvShows) {
-        mTvShows = tvShows;
+    public TvShowUpdateEvent(int id) {
+        mId = id;
     }
 
-    public List<TvShowsResponse.TvShow> getTvShows() {
-        return mTvShows;
+    public int getId() {
+        return mId;
     }
 
-    public void setTvShows(List<TvShowsResponse.TvShow> tvShows) {
-        mTvShows = tvShows;
+    public void setId(int id) {
+        mId = id;
     }
 }

@@ -27,7 +27,16 @@ public class TvShowActivity extends Activity {
         if (mTvShowId == -1) {
             finish();
         }
-        TvShowFragment tvShowFragment = (TvShowFragment) getFragmentManager().findFragmentById(R.id.fragment_tv_show);
-        tvShowFragment.setTvShowId(mTvShowId);
+
+
+        TvShowFragment tvShowFragment = new TvShowFragment();
+        Bundle bundle = new Bundle();
+        bundle.putInt(EXTRA_TVSHOW_ID, mTvShowId);
+        tvShowFragment.setArguments(bundle);
+
+        getFragmentManager()
+                .beginTransaction()
+                .replace(R.id.container, tvShowFragment)
+                .commit();
     }
 }

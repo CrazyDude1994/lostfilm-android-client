@@ -1,5 +1,6 @@
 package com.crazydude.common.db;
 
+import com.crazydude.common.api.Season;
 import com.crazydude.common.api.TvShowsResponse;
 import com.crazydude.common.db.models.Episode;
 import com.crazydude.common.db.models.TvShow;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
+import io.realm.RealmList;
 import io.realm.RealmResults;
 
 /**
@@ -66,14 +68,17 @@ public class DatabaseManager {
     }
 
     public TvShow getTvShow(int id) {
-        TvShow show = mRealm.where(TvShow.class)
+        return mRealm.where(TvShow.class)
                 .equalTo("mId", id)
                 .findFirst();
-
-        return show;
     }
 
     public void close() {
+        try {
+            mRealm.removeAllChangeListeners();
+        } catch (IllegalStateException ignored) {
+
+        }
         mRealm.close();
     }
 
@@ -85,5 +90,41 @@ public class DatabaseManager {
         return mRealm.where(TvShow.class)
                 .in("mId", ids)
                 .findAll();
+    }
+
+    public List<TvShow> getTvShows() {
+        return mRealm.where(TvShow.class)
+                .findAll();
+    }
+
+    public void updateTvShowSeasons(int id, Season[] seasons) {
+        mRealm.executeTransaction(realm -> {
+            TvShow tvShow = realm.where(TvShow.class)
+                    .equalTo("mId", id)
+                    .findFirst();
+            RealmList<com.crazydude.common.db.models.Season> seasonRealmList = new RealmList<>();
+
+            for (Season season : seasons) {
+                if (season.getEpisodes().size() > 0) {
+                    String seasonId = season.getEpisodes().get(0).getSeasonId();
+                    RealmList<Episode> episodeRealmList = new RealmList<>();
+                    for (Season.Episode episode : season.getEpisodes()) {
+                        Episode managedEpisode = realm.copyToRealm(new Episode(episode.getId(), episode.getName(), null, 0, null));
+                        episodeRealmList.add(managedEpisode);
+                    }
+
+                    com.crazydude.common.db.models.Season managedSeason =
+                            realm.copyToRealm(new com.crazydude.common.db.models.Season(seasonId, season.getName(), false, episodeRealmList, tvShow));
+
+                    for (Episode episode : managedSeason.getEpisodes()) {
+                        episode.setSeason(managedSeason);
+                    }
+
+                    seasonRealmList.add(managedSeason);
+                }
+            }
+            tvShow.setSeasons(seasonRealmList);
+            realm.copyToRealmOrUpdate(tvShow);
+        });
     }
 }

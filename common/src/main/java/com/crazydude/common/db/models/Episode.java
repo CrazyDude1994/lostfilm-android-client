@@ -15,6 +15,7 @@ public class Episode extends RealmObject {
     private String mPosterUrl;
 
     public Episode() {
+
     }
 
     public Episode(String id, String name, Season season, int detailsId, String posterUrl) {

@@ -9,7 +9,7 @@ import com.birbit.android.jobqueue.RetryConstraint;
 import com.crazydude.common.api.LostFilmApi;
 import com.crazydude.common.api.TvShowsResponse;
 import com.crazydude.common.db.DatabaseManager;
-import com.crazydude.common.events.TvShowUpdateEvent;
+import com.crazydude.common.events.TvShowsUpdateEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -47,7 +47,7 @@ public class TvShowDatabaseFetchJob extends Job {
                 .takeWhile(tvShows -> tvShows.size() == 10)
                 .subscribe(tvShows -> {
                     databaseManager.updateTvShows(tvShows);
-                    EventBus.getDefault().post(new TvShowUpdateEvent(tvShows));
+                    EventBus.getDefault().post(new TvShowsUpdateEvent(tvShows));
                 }, throwable -> databaseManager.close(), databaseManager::close);
     }
 

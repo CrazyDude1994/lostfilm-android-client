@@ -11,14 +11,16 @@ public class Season extends RealmObject {
 
     RealmList<Episode> mEpisodes;
     private String mId;
+    private String mName;
     private boolean mHasFullSeasonDownloadUrl;
     private TvShow mTvShow;
 
     public Season() {
     }
 
-    public Season(String id, boolean hasFullSeasonDownloadUrl, RealmList<Episode> episodes, TvShow tvShow) {
+    public Season(String id, String name, boolean hasFullSeasonDownloadUrl, RealmList<Episode> episodes, TvShow tvShow) {
         mId = id;
+        mName = name;
         mHasFullSeasonDownloadUrl = hasFullSeasonDownloadUrl;
         mEpisodes = episodes;
         mTvShow = tvShow;
@@ -54,5 +56,13 @@ public class Season extends RealmObject {
 
     public void setTvShow(TvShow tvShow) {
         mTvShow = tvShow;
+    }
+
+    public String getName() {
+        return mName;
+    }
+
+    public void setName(String name) {
+        mName = name;
     }
 }

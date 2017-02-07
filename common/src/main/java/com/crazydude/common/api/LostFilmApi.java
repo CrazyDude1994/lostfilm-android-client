@@ -3,7 +3,6 @@ package com.crazydude.common.api;
 import android.webkit.CookieManager;
 
 import com.crazydude.common.db.models.DownloadLink;
-import com.crazydude.common.db.models.TvShow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +16,6 @@ import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.converter.scalars.ScalarsConverterFactory;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
@@ -30,7 +28,9 @@ import rx.schedulers.Schedulers;
 public class LostFilmApi {
 
     private static final LostFilmApi mLostFilmApi = new LostFilmApi();
+    private final LostFilmService mLostFilmServiceGsonless;
     private Retrofit mRetrofit;
+    private Retrofit mRetrofitGsonless;
     private LostFilmService mLostFilmService;
 
     public enum SearchType {
@@ -40,8 +40,37 @@ public class LostFilmApi {
     private LostFilmApi() {
         mRetrofit = new Retrofit.Builder()
                 .baseUrl("https://www.lostfilm.tv/")
-                .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(LostFilmApiConverterFactory.create())
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .client(new OkHttpClient.Builder().cookieJar(new CookieJar() {
+                    @Override
+                    public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+                        CookieManager cookieManager = CookieManager.getInstance();
+                        for (Cookie cookie : cookies) {
+                            cookieManager.setCookie(url.host(), cookie.name() + "=" + cookie.value());
+                        }
+                    }
+
+                    @Override
+                    public List<Cookie> loadForRequest(HttpUrl url) {
+                        ArrayList<Cookie> cookieList = new ArrayList<>();
+                        if (CookieManager.getInstance().hasCookies() && CookieManager.getInstance().getCookie(url.host()) != null) {
+                            String[] cookies = CookieManager.getInstance().getCookie(url.host()).split(";");
+                            for (String cookie : cookies) {
+                                String name = cookie.split("=")[0].trim();
+                                String value = cookie.split("=")[1].trim();
+                                cookieList.add(new Cookie.Builder().domain(url.host()).name(name).value(value).build());
+                            }
+                        }
+                        return cookieList;
+                    }
+                }).build())
+                .build();
+
+        mRetrofitGsonless = new Retrofit.Builder()
+                .baseUrl("https://www.lostfilm.tv/")
+                .addConverterFactory(LostFilmApiConverterFactory.create())
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .client(new OkHttpClient.Builder().cookieJar(new CookieJar() {
                     @Override
@@ -69,6 +98,7 @@ public class LostFilmApi {
                 .build();
 
         mLostFilmService = mRetrofit.create(LostFilmService.class);
+        mLostFilmServiceGsonless = mRetrofitGsonless.create(LostFilmService.class);
     }
 
     public static LostFilmApi getInstance() {
@@ -93,8 +123,8 @@ public class LostFilmApi {
                 });
     }
 
-    public Observable<TvShow> getTvShowData(int id) {
-        return mLostFilmService.getTvShow(id).compose(applySchedulers());
+    public Observable<Season[]> getTvShowSeasons(String alias) {
+        return mLostFilmServiceGsonless.getTvShowSeasons(alias);
     }
 
     public Observable<DownloadLink[]> getTvShowDownloadLink(int tvShowId, String seasonId, String episodeId) {

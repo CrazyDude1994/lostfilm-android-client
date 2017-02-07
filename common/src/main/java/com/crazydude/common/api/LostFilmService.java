@@ -7,6 +7,7 @@ import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 import rx.Observable;
 
@@ -31,6 +32,9 @@ public interface LostFilmService {
                                            @Field("o") int offset,
                                            @Field("s") int searchType,
                                            @Field("t") int t);
+
+    @GET("series/{alias}/seasons")
+    Observable<Season[]> getTvShowSeasons(@Path("alias") String alias);
 
     @GET("browse.php")
     Observable<TvShow> getTvShow(@Query("cat") int id);

@@ -26,4 +26,8 @@ public class Utils {
 
         return false;
     }
+
+    public static String generatePosterUrl(int id) {
+        return String.format("http://static.lostfilm.tv/Images/%d/Posters/poster.jpg", id);
+    }
 }

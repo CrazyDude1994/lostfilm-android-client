@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
 import com.crazydude.common.db.models.Episode;
+import com.crazydude.common.utils.Utils;
 import com.crazydude.lostfilmclient.R;
 
 /**
@@ -50,7 +51,9 @@ public class EpisodePresenter extends Presenter {
         cardView.setMainImageDimensions(width, height);
 
         Glide.with(cardView.getContext())
-                .load("")
+                .load(Utils.generatePosterUrl(((Episode) item).getSeason().getTvShow().getId(),
+                        ((Episode) item).getSeason().getId(),
+                        ((Episode) item).getId()))
                 .error(R.color.color_primary)
                 .placeholder(R.color.color_primary)
                 .crossFade()

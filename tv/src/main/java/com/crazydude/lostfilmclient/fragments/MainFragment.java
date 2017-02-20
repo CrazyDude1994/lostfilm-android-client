@@ -2,7 +2,6 @@ package com.crazydude.lostfilmclient.fragments;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
@@ -17,9 +16,6 @@ import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.util.DisplayMetrics;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.TvShow;
 import com.crazydude.common.events.TvShowsUpdateEvent;
@@ -29,6 +25,7 @@ import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.activity.LoginActivity;
 import com.crazydude.lostfilmclient.activity.TvShowActivity;
 import com.crazydude.lostfilmclient.presenters.TvShowPresenter;
+import com.crazydude.lostfilmclient.utils.DebouncedImageLoader;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -50,6 +47,7 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
     private BackgroundManager mBackgroundManager;
     private DisplayMetrics mMetrics;
     private Map<String, ArrayObjectAdapter> mAlphabetAdapterMap = new HashMap<>();
+    private DebouncedImageLoader mImageLoader;
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdate(TvShowsUpdateEvent event) {
@@ -60,20 +58,8 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
 
     @Override
     public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
-        if (item instanceof TvShow) {
-            int width = mMetrics.widthPixels;
-            int height = mMetrics.heightPixels;
-            Glide.with(this)
-                    .load(Utils.generatePosterUrl(((TvShow) item).getId()))
-                    .asBitmap()
-                    .centerCrop()
-                    .into(new SimpleTarget<Bitmap>(width, height) {
-                        @Override
-                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap>
-                                glideAnimation) {
-                            mBackgroundManager.setBitmap(resource);
-                        }
-                    });
+        if (item instanceof Utils.PosterProvider) {
+            mImageLoader.feed(((Utils.PosterProvider) item));
         }
     }
 
@@ -97,6 +83,7 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         mJobHelper.close();
         mDatabaseManager.close();
         mBackgroundManager.release();
+        mImageLoader.close();
     }
 
     @Override
@@ -155,6 +142,7 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         mBackgroundManager.attach(getActivity().getWindow());
         mMetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
+        mImageLoader = new DebouncedImageLoader(getActivity(), mBackgroundManager, mMetrics.widthPixels, mMetrics.heightPixels);
     }
 
     private void setupUI() {

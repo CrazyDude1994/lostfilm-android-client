@@ -1,12 +1,14 @@
 package com.crazydude.common.db.models;
 
+import com.crazydude.common.utils.Utils;
+
 import io.realm.RealmObject;
 
 /**
  * Created by Crazy on 10.01.2017.
  */
 
-public class Episode extends RealmObject {
+public class Episode extends RealmObject implements Utils.PosterProvider {
 
     private String mId;
     private String mName;
@@ -64,5 +66,11 @@ public class Episode extends RealmObject {
 
     public void setPosterUrl(String posterUrl) {
         mPosterUrl = posterUrl;
+    }
+
+    @Override
+    public String providePosterURL() {
+        return Utils.generatePosterUrl(getSeason().getTvShow().getId(), getSeason().getId(),
+                getId());
     }
 }

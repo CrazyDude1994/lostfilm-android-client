@@ -1,6 +1,7 @@
 package com.crazydude.common.db.models;
 
 import com.crazydude.common.api.TvShowsResponse;
+import com.crazydude.common.utils.Utils;
 
 import io.realm.RealmList;
 import io.realm.RealmObject;
@@ -10,7 +11,8 @@ import io.realm.annotations.PrimaryKey;
  * Created by Crazy on 08.01.2017.
  */
 
-public class TvShow extends RealmObject {
+public class TvShow extends RealmObject implements Utils.PosterProvider {
+
 
     @PrimaryKey
     private int mId;
@@ -157,5 +159,10 @@ public class TvShow extends RealmObject {
 
     public void setSeasons(RealmList<Season> seasons) {
         mSeasons = seasons;
+    }
+
+    @Override
+    public String providePosterURL() {
+        return Utils.generatePosterUrl(getId());
     }
 }

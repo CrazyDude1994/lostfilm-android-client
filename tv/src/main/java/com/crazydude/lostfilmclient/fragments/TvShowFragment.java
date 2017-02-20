@@ -2,7 +2,6 @@ package com.crazydude.lostfilmclient.fragments;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
@@ -18,9 +17,6 @@ import android.support.v17.leanback.widget.RowPresenter;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.Episode;
 import com.crazydude.common.db.models.Season;
@@ -30,6 +26,7 @@ import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.activity.PlayerActivity;
 import com.crazydude.lostfilmclient.activity.TvShowActivity;
 import com.crazydude.lostfilmclient.presenters.EpisodePresenter;
+import com.crazydude.lostfilmclient.utils.DebouncedImageLoader;
 
 import io.realm.RealmChangeListener;
 
@@ -45,23 +42,12 @@ public class TvShowFragment extends BrowseFragment implements OnItemViewClickedL
     private TvShow mTvShow;
     private BackgroundManager mBackgroundManager;
     private DisplayMetrics mMetrics;
+    private DebouncedImageLoader mImageLoader;
 
     @Override
     public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
-        if (item instanceof Episode) {
-            int width = mMetrics.widthPixels;
-            int height = mMetrics.heightPixels;
-            Glide.with(this)
-                    .load(Utils.generatePosterUrl(mTvShowId, ((Episode) item).getSeason().getId(), ((Episode) item).getId()))
-                    .asBitmap()
-                    .centerCrop()
-                    .into(new SimpleTarget<Bitmap>(width, height) {
-                        @Override
-                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap>
-                                glideAnimation) {
-                            mBackgroundManager.setBitmap(resource);
-                        }
-                    });
+        if (item instanceof Utils.PosterProvider) {
+            mImageLoader.feed((Utils.PosterProvider) item);
         }
     }
 
@@ -96,6 +82,7 @@ public class TvShowFragment extends BrowseFragment implements OnItemViewClickedL
     public void onDestroy() {
         super.onDestroy();
         mDatabaseManager.close();
+        mImageLoader.close();
     }
 
     private void setupUI() {
@@ -130,5 +117,6 @@ public class TvShowFragment extends BrowseFragment implements OnItemViewClickedL
         mBackgroundManager.attach(getActivity().getWindow());
         mMetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
+        mImageLoader = new DebouncedImageLoader(getActivity(), mBackgroundManager, mMetrics.widthPixels, mMetrics.heightPixels);
     }
 }

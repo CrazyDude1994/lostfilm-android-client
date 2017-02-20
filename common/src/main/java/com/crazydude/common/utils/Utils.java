@@ -34,4 +34,9 @@ public class Utils {
     public static String generatePosterUrl(int id, String season, String episode) {
         return String.format("http://static.lostfilm.tv/Images/%d/Posters/e_%s_%s.jpg", id, season, episode);
     }
+
+
+    public interface PosterProvider {
+        String providePosterURL();
+    }
 }

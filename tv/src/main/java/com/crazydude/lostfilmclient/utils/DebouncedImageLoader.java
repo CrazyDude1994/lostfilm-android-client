@@ -51,7 +51,7 @@ public class DebouncedImageLoader implements Observable.OnSubscribe<Utils.Poster
     }
 
     public void close() {
-        mSubscriber.onCompleted();
+        mSubscriber.unsubscribe();
     }
 
     @Override

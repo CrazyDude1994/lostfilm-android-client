@@ -39,7 +39,7 @@ public interface LostFilmService {
     @GET("browse.php")
     Observable<TvShow> getTvShow(@Query("cat") int id);
 
-    @GET("nrdr2.php")
+    @GET("v_search.php")
     Observable<String> getTvShowHash(@Query("c") int tvShowId,
                                      @Query("s") String seasonId,
                                      @Query("e") String episodeId);

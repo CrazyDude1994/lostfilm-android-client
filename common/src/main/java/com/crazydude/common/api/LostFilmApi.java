@@ -16,6 +16,7 @@ import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.converter.scalars.ScalarsConverterFactory;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
@@ -40,6 +41,7 @@ public class LostFilmApi {
     private LostFilmApi() {
         mRetrofit = new Retrofit.Builder()
                 .baseUrl("https://www.lostfilm.tv/")
+                .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .addConverterFactory(LostFilmApiConverterFactory.create())
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
@@ -71,6 +73,7 @@ public class LostFilmApi {
         mRetrofitGsonless = new Retrofit.Builder()
                 .baseUrl("https://www.lostfilm.tv/")
                 .addConverterFactory(LostFilmApiConverterFactory.create())
+                .addConverterFactory(ScalarsConverterFactory.create())
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .client(new OkHttpClient.Builder().cookieJar(new CookieJar() {
                     @Override
@@ -128,7 +131,7 @@ public class LostFilmApi {
     }
 
     public Observable<DownloadLink[]> getTvShowDownloadLink(int tvShowId, String seasonId, String episodeId) {
-        return mLostFilmService.getTvShowHash(tvShowId, seasonId, episodeId).compose(applySchedulers())
+        return mLostFilmServiceGsonless.getTvShowHash(tvShowId, seasonId, episodeId).compose(applySchedulers())
                 .flatMap(new Func1<String, Observable<DownloadLink[]>>() {
                     @Override
                     public Observable<DownloadLink[]> call(String response) {
@@ -139,7 +142,7 @@ public class LostFilmApi {
                         if (hashMatcher.find() && userIdMatcher.find()) {
                             String hash = hashMatcher.group(1);
                             String userId = userIdMatcher.group(1);
-                            return mLostFilmService.getTvShowDownloadLink(tvShowId, seasonId, episodeId, hash, userId);
+                            return mLostFilmServiceGsonless.getTvShowDownloadLink(tvShowId, seasonId, episodeId, hash, userId).compose(applySchedulers());
                         } else {
                             return null;
                         }
@@ -147,7 +150,7 @@ public class LostFilmApi {
                 });
     }
 
-    <T> Observable.Transformer<T, T> applySchedulers() {
+    private <T> Observable.Transformer<T, T> applySchedulers() {
         return observable -> observable.subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .retry(3);

@@ -11,27 +11,37 @@ import android.widget.Toast;
 import com.crazydude.common.api.LoginResponse;
 import com.crazydude.common.api.LostFilmApi;
 import com.crazydude.common.events.LoginEvent;
+import com.crazydude.interactors.LoginInteractor;
 import com.crazydude.lostfilmclient.R;
+import com.crazydude.models.LoginResult;
+import com.crazydude.models.User;
 
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;
 
-import rx.Observer;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 
 /**
  * Created by Crazy on 07.01.2017.
  */
 
-public class LoginFragment extends GuidedStepFragment implements Observer<LoginResponse> {
+public class LoginFragment extends GuidedStepFragment implements Observer<LoginResult> {
 
     private static final long LOGIN_ACTION = 0;
     private static final long EMAIL = 1;
     private static final long PASSWORD = 2;
 
     @Override
-    public void onCompleted() {
+    public void onSubscribe(Disposable d) {
 
+    }
+
+    @Override
+    public void onNext(LoginResult loginResult) {
+        EventBus.getDefault().post(new LoginEvent(loginResult.getLogin()));
     }
 
     @Override
@@ -40,8 +50,8 @@ public class LoginFragment extends GuidedStepFragment implements Observer<LoginR
     }
 
     @Override
-    public void onNext(LoginResponse loginResponse) {
-        EventBus.getDefault().post(new LoginEvent(loginResponse.getName()));
+    public void onComplete() {
+
     }
 
     @Override
@@ -80,7 +90,8 @@ public class LoginFragment extends GuidedStepFragment implements Observer<LoginR
             try {
                 String email = findActionById(EMAIL).getDescription().toString();
                 String password = findActionById(PASSWORD).getDescription().toString();
-                LostFilmApi.getInstance().login(email, password).subscribe(this);
+                LoginInteractor interactor = new LoginInteractor(new User(email, password), AndroidSchedulers.mainThread(), LostFilmApi.getInstance());
+                interactor.getObservable().subscribe(this);
             } catch (NullPointerException e) {
                 Toast.makeText(getActivity(), R.string.enter_login, Toast.LENGTH_SHORT).show();
             }

@@ -2,31 +2,34 @@ package com.crazydude.common.api;
 
 import android.webkit.CookieManager;
 
+import com.crazydude.api.Api;
 import com.crazydude.common.db.models.DownloadLink;
+import com.crazydude.models.LoginResult;
+import com.crazydude.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.functions.Function;
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by Crazy on 08.01.2017.
  */
 
-public class LostFilmApi {
+public class LostFilmApi implements Api {
 
     private static final LostFilmApi mLostFilmApi = new LostFilmApi();
     private final LostFilmService mLostFilmServiceGsonless;
@@ -34,17 +37,13 @@ public class LostFilmApi {
     private Retrofit mRetrofitGsonless;
     private LostFilmService mLostFilmService;
 
-    public enum SearchType {
-        RATING, NAME, DATE;
-    }
-
     private LostFilmApi() {
         mRetrofit = new Retrofit.Builder()
                 .baseUrl("https://www.lostfilm.tv/")
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .addConverterFactory(LostFilmApiConverterFactory.create())
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .client(new OkHttpClient.Builder().cookieJar(new CookieJar() {
                     @Override
                     public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
@@ -74,7 +73,7 @@ public class LostFilmApi {
                 .baseUrl("https://www.lostfilm.tv/")
                 .addConverterFactory(LostFilmApiConverterFactory.create())
                 .addConverterFactory(ScalarsConverterFactory.create())
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .client(new OkHttpClient.Builder().cookieJar(new CookieJar() {
                     @Override
                     public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
@@ -113,28 +112,15 @@ public class LostFilmApi {
                 .map(TvShowsResponse::getData);
     }
 
-    public Observable<LoginResponse> login(String email, String password) {
-        return mLostFilmService.login("users", "login", email, password, "1")
-                .compose(applySchedulers())
-                .doOnNext(loginResponse -> {
-                    if (loginResponse.getError() != null) {
-                        if (loginResponse.getError() == 1) {
-                            return;
-                        }
-                        throw new AuthException();
-                    }
-                });
-    }
-
     public Observable<Season[]> getTvShowSeasons(String alias) {
         return mLostFilmServiceGsonless.getTvShowSeasons(alias);
     }
 
     public Observable<DownloadLink[]> getTvShowDownloadLink(int tvShowId, String seasonId, String episodeId) {
-        return mLostFilmServiceGsonless.getTvShowHash(tvShowId, seasonId, episodeId).compose(applySchedulers())
-                .flatMap(new Func1<String, Observable<DownloadLink[]>>() {
+        return mLostFilmServiceGsonless.getTvShowHash(tvShowId, seasonId, episodeId)
+                .flatMap(new Function<String, ObservableSource<DownloadLink[]>>() {
                     @Override
-                    public Observable<DownloadLink[]> call(String response) {
+                    public ObservableSource<DownloadLink[]> apply(@NonNull String response) throws Exception {
                         Pattern hashPattern = Pattern.compile("h=([\\w\\d]+)");
                         Pattern userIdPattern = Pattern.compile("u=(\\d+)");
                         Matcher hashMatcher = hashPattern.matcher(response);
@@ -142,7 +128,7 @@ public class LostFilmApi {
                         if (hashMatcher.find() && userIdMatcher.find()) {
                             String hash = hashMatcher.group(1);
                             String userId = userIdMatcher.group(1);
-                            return mLostFilmServiceGsonless.getTvShowDownloadLink(tvShowId, seasonId, episodeId, hash, userId).compose(applySchedulers());
+                            return mLostFilmServiceGsonless.getTvShowDownloadLink(tvShowId, seasonId, episodeId, hash, userId);
                         } else {
                             return null;
                         }
@@ -150,9 +136,21 @@ public class LostFilmApi {
                 });
     }
 
-    private <T> Observable.Transformer<T, T> applySchedulers() {
-        return observable -> observable.subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .retry(3);
+    @Override
+    public Observable<LoginResult> login(User user) {
+        return mLostFilmService.login("users", "login", user.getLogin(), user.getPassword(), "1")
+                .doOnNext(loginResponse -> {
+                    if (loginResponse.getError() != null) {
+                        if (loginResponse.getError() == 1) {
+                            return;
+                        }
+                        throw new AuthException();
+                    }
+                }).map(loginResponse -> new LoginResult(user.getLogin(), user.getPassword(),
+                        loginResponse.isSuccess()));
+    }
+
+    public enum SearchType {
+        RATING, NAME, DATE;
     }
 }

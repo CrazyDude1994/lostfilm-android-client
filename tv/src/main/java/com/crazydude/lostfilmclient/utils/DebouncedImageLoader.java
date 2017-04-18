@@ -11,18 +11,21 @@ import com.crazydude.common.utils.Utils;
 
 import java.util.concurrent.TimeUnit;
 
-import rx.Observable;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+
 
 /**
  * Created by Crazy on 09.02.2017.
  */
 
-public class DebouncedImageLoader implements Observable.OnSubscribe<Utils.PosterProvider> {
+public class DebouncedImageLoader implements ObservableOnSubscribe<Utils.PosterProvider> {
 
     private BackgroundManager mBackgroundManager;
-    private Subscriber<? super Utils.PosterProvider> mSubscriber;
+    private ObservableEmitter<Utils.PosterProvider> mEmitter;
 
     public DebouncedImageLoader(Context context, BackgroundManager backgroundManager, int width, int height) {
         mBackgroundManager = backgroundManager;
@@ -45,17 +48,18 @@ public class DebouncedImageLoader implements Observable.OnSubscribe<Utils.Poster
     }
 
     public void feed(Utils.PosterProvider posterProvider) {
-        if (mSubscriber != null && !mSubscriber.isUnsubscribed()) {
-            mSubscriber.onNext(posterProvider);
+        if (mEmitter != null && !mEmitter.isDisposed()) {
+            mEmitter.onNext(posterProvider);
         }
     }
 
     public void close() {
-        mSubscriber.unsubscribe();
+        mEmitter.onComplete();
+        mEmitter = null;
     }
 
     @Override
-    public void call(Subscriber<? super Utils.PosterProvider> subscriber) {
-        mSubscriber = subscriber;
+    public void subscribe(@NonNull ObservableEmitter<Utils.PosterProvider> e) throws Exception {
+        mEmitter = e;
     }
 }

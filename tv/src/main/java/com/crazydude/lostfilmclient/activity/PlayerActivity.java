@@ -54,11 +54,12 @@ import com.google.android.exoplayer2.util.Util;
 
 import java.util.concurrent.TimeUnit;
 
-import rx.Observable;
-import rx.Observer;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+
 
 /**
  * Created by Crazy on 11.01.2017.
@@ -76,7 +77,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     private String mEpisodeId;
     private DatabaseManager mDatabaseManager;
     private LostFilmApi mLostFilmApi;
-    private Subscription mSubscription;
+    private Disposable mDisposable;
     private DownloadLink mSelectedLink;
     private TorrentStream mTorrentStream;
     private SurfaceHolder mSurfaceHolder;
@@ -112,12 +113,8 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     }
 
     @Override
-    public void onCompleted() {
-
-    }
-
-    @Override
-    public void onError(Throwable e) {
+    public void onSubscribe(Disposable d) {
+        mDisposable = d;
     }
 
     @Override
@@ -138,6 +135,15 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
                         MY_PERMISSIONS_REQUEST_PLAY_MOVIE);
             }
         }).show();
+    }
+
+    @Override
+    public void onError(Throwable e) {
+    }
+
+    @Override
+    public void onComplete() {
+
     }
 
     @Override
@@ -165,8 +171,8 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     protected void onDestroy() {
         super.onDestroy();
         mDatabaseManager.close();
-        if (mSubscription != null && !mSubscription.isUnsubscribed()) {
-            mSubscription.unsubscribe();
+        if (mDisposable != null && !mDisposable.isDisposed()) {
+            mDisposable.dispose();
         }
         if (mTorrentStream != null) {
             mTorrentStream.stopStream();
@@ -322,7 +328,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     }
 
     private void loadData() {
-        mSubscription = mLostFilmApi.getTvShowDownloadLink(mTvShowId, mSeasonId, mEpisodeId)
+        mLostFilmApi.getTvShowDownloadLink(mTvShowId, mSeasonId, mEpisodeId)
                 .subscribe(this);
     }
 }

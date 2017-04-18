@@ -1,1 +1,1 @@
-include ':mobile', ':tv', ':common'
+include ':mobile', ':tv', ':common', ':domain'

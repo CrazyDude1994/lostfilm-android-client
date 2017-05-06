@@ -14,8 +14,10 @@ import java.util.regex.Pattern;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.HttpUrl;
@@ -28,7 +30,6 @@ import retrofit2.converter.scalars.ScalarsConverterFactory;
 /**
  * Created by Crazy on 08.01.2017.
  */
-
 public class LostFilmApi implements Api {
 
     private static final LostFilmApi mLostFilmApi = new LostFilmApi();
@@ -37,7 +38,7 @@ public class LostFilmApi implements Api {
     private Retrofit mRetrofitGsonless;
     private LostFilmService mLostFilmService;
 
-    private LostFilmApi() {
+    public LostFilmApi() {
         mRetrofit = new Retrofit.Builder()
                 .baseUrl("https://www.lostfilm.tv/")
                 .addConverterFactory(ScalarsConverterFactory.create())
@@ -133,7 +134,8 @@ public class LostFilmApi implements Api {
                             return null;
                         }
                     }
-                });
+                }).observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io());
     }
 
     @Override

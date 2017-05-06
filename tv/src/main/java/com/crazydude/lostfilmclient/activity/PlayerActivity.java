@@ -85,6 +85,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     private PlaybackControlsRow mControlsRow;
     private VideoFragmentGlueHost mGlue;
     private PlaybackControlsRow.PlayPauseAction mPlayPauseAction;
+    private Disposable mProgressDisposable;
 
     @Override
     public void onActionClicked(Action action) {
@@ -224,6 +225,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     private void loadMovie() {
         TorrentOptions torrentOptions = new TorrentOptions.Builder()
                 .saveLocation(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
+                .removeFilesAfterStop(true)
                 .build();
 
         mTorrentStream = TorrentStream.init(torrentOptions);
@@ -238,6 +240,12 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
             @Override
             public void onStreamStarted(Torrent torrent) {
                 Log.d("Torrent", "Started");
+                mProgressDisposable = Observable.interval(1, TimeUnit.SECONDS)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeOn(Schedulers.io())
+                        .subscribe(aLong -> {
+                            Torrent.State state = torrent.getState();
+                        });
             }
 
             @Override
@@ -298,7 +306,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
 
                     }
                 });
-                Observable.interval(1, TimeUnit.SECONDS)
+                mProgressDisposable = Observable.interval(1, TimeUnit.SECONDS)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribeOn(Schedulers.io())
                         .takeWhile(aLong -> mPlayer != null)
@@ -316,6 +324,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
                     mControlsRow.setBufferedProgressLong((long) ((streamStatus.progress / 100) * mPlayer.getDuration()));
                     mGlue.notifyPlaybackRowChanged();
                 }
+                Log.d("Torrent", "Progress " + streamStatus.progress);
             }
 
             @Override
@@ -324,7 +333,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
             }
         });
 
-        mTorrentStream.startStream(mSelectedLink.getUrl());
+        mTorrentStream.startStream("http://tracktor.in/td.php?s=MIEVwylovFE2e0c%2BWcU4CgbCHT0gJ3eXueMcmu8N1i073FQ2M0pr9UZs78TwESm0r9sBcW7OHyITZ9xXsbLF0pcYag0aiH3q%2FQH6mTtGkx%2FsdSYJAeEWhDOx4cstHqZyYACZEw%3D%3D");
     }
 
     private void loadData() {

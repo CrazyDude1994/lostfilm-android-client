@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: "net.ltgt.apt"
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])

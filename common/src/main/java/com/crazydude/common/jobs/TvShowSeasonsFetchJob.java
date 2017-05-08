@@ -49,7 +49,6 @@ public class TvShowSeasonsFetchJob extends Job {
         }).subscribe(fullTvShowDetails -> {
             databaseManager.updateTvShowSeasons(mId, fullTvShowDetails.getSeasons());
             databaseManager.updatTvshowDetails(mId, fullTvShowDetails.getTvShowDetails());
-            EventBus.getDefault().post(new TvShowUpdateEvent(mId));
         }, throwable -> databaseManager.close(), databaseManager::close);
     }
 

@@ -255,7 +255,6 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
             @Override
             public void onStreamPrepared(Torrent torrent) {
                 Log.d("Torrent", "Prepared");
-                torrent.getTorrentHandle().setSequentialDownload(true);
                 torrent.startDownload();
             }
 

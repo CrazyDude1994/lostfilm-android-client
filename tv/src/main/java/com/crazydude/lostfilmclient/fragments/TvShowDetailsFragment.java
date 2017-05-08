@@ -16,23 +16,28 @@ import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.TvShow;
-import com.crazydude.common.events.TvShowUpdateEvent;
 import com.crazydude.lostfilmclient.presenters.DetailsPresenter;
 
 import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
+
+import io.realm.RealmChangeListener;
 
 /**
  * Created by Crazy on 07.05.2017.
  */
 
-public class TvShowDetailsFragment extends DetailsFragment {
+public class TvShowDetailsFragment extends DetailsFragment implements RealmChangeListener<TvShow> {
 
     private ArrayObjectAdapter mRowsAdapter;
     private DatabaseManager mDatabaseManager;
     private TvShow mTvShow;
     private DetailsOverviewRow mDetailsOverviewRow;
+
+    @Override
+    public void onChange(TvShow element) {
+        mTvShow = mDatabaseManager.getTvShow(element.getId());
+        mDetailsOverviewRow.setItem(mTvShow);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,28 +49,9 @@ public class TvShowDetailsFragment extends DetailsFragment {
         int tvshowId = arguments.getInt("tvshow_id");
 
         mTvShow = mDatabaseManager.getTvShow(tvshowId);
+        mTvShow.addChangeListener(this);
 
         buildDetails();
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void handleEvent(TvShowUpdateEvent event) {
-        if (mTvShow.getId() == event.getId()) {
-            mTvShow = mDatabaseManager.getTvShow(event.getId());
-            mDetailsOverviewRow.setItem(mTvShow);
-        }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        EventBus.getDefault().register(this);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        EventBus.getDefault().unregister(this);
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.crazydude.lostfilmclient.fragments;
 
-import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BackgroundManager;
@@ -23,7 +22,6 @@ import com.crazydude.common.jobs.JobHelper;
 import com.crazydude.common.utils.Utils;
 import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.activity.LoginActivity;
-import com.crazydude.lostfilmclient.activity.TvShowActivity;
 import com.crazydude.lostfilmclient.presenters.TvShowPresenter;
 import com.crazydude.lostfilmclient.utils.DebouncedImageLoader;
 
@@ -88,10 +86,12 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
 
     @Override
     public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
-        mJobHelper.scheduleTvShowSeasonsUpdate(((TvShow) item).getId(), ((TvShow) item).getAlias());
-        Intent intent = new Intent(getActivity(), TvShowActivity.class);
+        TvShow selectedTvShow = (TvShow) item;
+        mJobHelper.scheduleTvShowUpdate(selectedTvShow.getId(), selectedTvShow.getAlias());
+        EventBus.getDefault().post(new OnTvShowSelectedEvent(selectedTvShow.getId()));
+/*        Intent intent = new Intent(getActivity(), TvShowActivity.class);
         intent.putExtra(TvShowActivity.EXTRA_TVSHOW_ID, ((TvShow) item).getId());
-        startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(getActivity()).toBundle());
+        startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(getActivity()).toBundle());*/
     }
 
     @Override
@@ -153,5 +153,17 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
     private void loadTvShows() {
         List<TvShow> tvShows = mDatabaseManager.getTvShows();
         updateTvShows(tvShows);
+    }
+
+    public static class OnTvShowSelectedEvent {
+        private int mId;
+
+        public OnTvShowSelectedEvent(int id) {
+            mId = id;
+        }
+
+        public int getId() {
+            return mId;
+        }
     }
 }

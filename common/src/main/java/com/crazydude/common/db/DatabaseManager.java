@@ -1,6 +1,7 @@
 package com.crazydude.common.db;
 
 import com.crazydude.common.api.Season;
+import com.crazydude.common.api.TvShowDetails;
 import com.crazydude.common.api.TvShowsResponse;
 import com.crazydude.common.db.models.Episode;
 import com.crazydude.common.db.models.TvShow;
@@ -36,6 +37,7 @@ public class DatabaseManager {
                 } else {
                     TvShow updatedTvShow = new TvShow(show);
                     updatedTvShow.setSeasons(tvShow.getSeasons());
+                    updatedTvShow.setDescription(tvShow.getDescription());
                     realm.copyToRealmOrUpdate(updatedTvShow);
                 }
             }
@@ -124,6 +126,16 @@ public class DatabaseManager {
                 }
             }
             tvShow.setSeasons(seasonRealmList);
+            realm.copyToRealmOrUpdate(tvShow);
+        });
+    }
+
+    public void updatTvshowDetails(int id, TvShowDetails tvShowDetails) {
+        mRealm.executeTransaction(realm -> {
+            TvShow tvShow = realm.where(TvShow.class)
+                    .equalTo("mId", id)
+                    .findFirst();
+            tvShow.setDescription(tvShowDetails.getDescription());
             realm.copyToRealmOrUpdate(tvShow);
         });
     }

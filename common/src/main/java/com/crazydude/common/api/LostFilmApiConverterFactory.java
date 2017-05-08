@@ -82,6 +82,22 @@ public class LostFilmApiConverterFactory extends Converter.Factory {
                     return downloadLinks;
                 }
             };
+        } else if (type.equals(TvShowDetails.class)) {
+            return new Converter<ResponseBody, TvShowDetails>() {
+                @Override
+                public TvShowDetails convert(ResponseBody value) throws IOException {
+                    TvShowDetails tvShowDetails = new TvShowDetails(null);
+                    Document document = Jsoup.parse(value.string());
+                    Elements elements = document.getElementsByClass("text-block description");
+                    if (elements.size() == 1) {
+                        Elements body = elements.get(0).getElementsByClass("body");
+                        if (body.size() > 0) {
+                            tvShowDetails.setDescription(body.get(0).text());
+                        }
+                    }
+                    return tvShowDetails;
+                }
+            };
         } else {
             return null;
         }

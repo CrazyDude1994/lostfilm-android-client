@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 
 import com.crazydude.lostfilmclient.R;
+import com.crazydude.lostfilmclient.fragments.MainFragment;
+import com.crazydude.lostfilmclient.fragments.TvShowDetailsFragment;
 import com.crazydude.lostfilmclient.fragments.WelcomeFragment;
 
 import org.greenrobot.eventbus.EventBus;
@@ -22,6 +24,19 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
     }
 
+    @Subscribe
+    public void handleEvent(MainFragment.OnTvShowSelectedEvent event) {
+        TvShowDetailsFragment tvShowDetailsFragment = new TvShowDetailsFragment();
+        Bundle bundle = new Bundle();
+        bundle.putInt("tvshow_id", event.getId());
+        tvShowDetailsFragment.setArguments(bundle);
+        getFragmentManager()
+                .beginTransaction()
+                .replace(R.id.placeholder, tvShowDetailsFragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +48,10 @@ public class MainActivity extends Activity {
             setContentView(R.layout.activity_main_first_time);
         } else {
             setContentView(R.layout.activity_main);
+            getFragmentManager()
+                    .beginTransaction()
+                    .add(R.id.placeholder, new MainFragment())
+                    .commit();
         }
     }
 

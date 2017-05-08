@@ -28,6 +28,7 @@ public class TvShow extends RealmObject implements Utils.PosterProvider {
     private float mRating;
     private String mTitle;
     private String mTitleOriginal;
+    private String mDescription;
     private RealmList<Season> mSeasons;
 
     public TvShow(TvShowsResponse.TvShow tvShow) {
@@ -159,6 +160,14 @@ public class TvShow extends RealmObject implements Utils.PosterProvider {
 
     public void setSeasons(RealmList<Season> seasons) {
         mSeasons = seasons;
+    }
+
+    public String getDescription() {
+        return mDescription;
+    }
+
+    public void setDescription(String description) {
+        mDescription = description;
     }
 
     @Override

@@ -36,8 +36,8 @@ public interface LostFilmService {
     @GET("series/{alias}/seasons")
     Observable<Season[]> getTvShowSeasons(@Path("alias") String alias);
 
-    @GET("browse.php")
-    Observable<TvShow> getTvShow(@Query("cat") int id);
+    @GET("series/{alias}")
+    Observable<TvShowDetails> getTvShowDetails(@Path("alias") String alias);
 
     @GET("v_search.php")
     Observable<String> getTvShowHash(@Query("c") int tvShowId,

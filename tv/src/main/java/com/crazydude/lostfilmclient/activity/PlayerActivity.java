@@ -19,6 +19,7 @@ import android.support.v17.leanback.widget.PlaybackControlsRowPresenter;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.SurfaceHolder;
+import android.widget.TextView;
 
 import com.crazydude.common.api.LostFilmApi;
 import com.crazydude.common.db.DatabaseManager;
@@ -86,6 +87,11 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     private VideoFragmentGlueHost mGlue;
     private PlaybackControlsRow.PlayPauseAction mPlayPauseAction;
     private Disposable mProgressDisposable;
+    private PlaybackControlsRow.RewindAction mRewindAction;
+    private PlaybackControlsRow.FastForwardAction mFastForwardAction;
+    private TextView mTorrentProgress;
+    private TextView mDownloadRate;
+    private StreamStatus mLastStatus;
 
     @Override
     public void onActionClicked(Action action) {
@@ -95,6 +101,14 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
                 mPlayer.setPlayWhenReady(mPlayPauseAction.getIndex() == PlaybackControlsRow.PlayPauseAction.PAUSE);
             }
             mGlue.notifyPlaybackRowChanged();
+        } else if (action == mFastForwardAction) {
+            if (mPlayer != null) {
+                mPlayer.seekTo(mPlayer.getCurrentPosition() + 10000);
+            }
+        } else if (action == mRewindAction) {
+            if (mPlayer != null) {
+                mPlayer.seekTo(mPlayer.getCurrentPosition() - 10000);
+            }
         }
     }
 
@@ -153,6 +167,9 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
 
         setContentView(R.layout.activity_player);
 
+        mTorrentProgress = (TextView) findViewById(R.id.torrent_progress);
+        mDownloadRate = (TextView) findViewById(R.id.download_speed);
+
         Intent intent = getIntent();
         mTvShowId = intent.getIntExtra(EXTRA_TV_SHOW_ID, -1);
         if (mTvShowId == -1) {
@@ -181,6 +198,9 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
         }
         if (mPlayer != null) {
             mPlayer.release();
+        }
+        if (mProgressDisposable != null) {
+            mProgressDisposable.dispose();
         }
     }
 
@@ -211,9 +231,11 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
         ArrayObjectAdapter adapter = new ArrayObjectAdapter(new ControlButtonPresenterSelector());
         mPlayPauseAction = new PlaybackControlsRow.PlayPauseAction(this);
         mPlayPauseAction.nextIndex(); // set to play
-        adapter.add(new PlaybackControlsRow.RewindAction(this));
+        mRewindAction = new PlaybackControlsRow.RewindAction(this);
+        mFastForwardAction = new PlaybackControlsRow.FastForwardAction(this);
+        adapter.add(mRewindAction);
         adapter.add(mPlayPauseAction);
-        adapter.add(new PlaybackControlsRow.FastForwardAction(this));
+        adapter.add(mFastForwardAction);
         mControlsRow.setPrimaryActionsAdapter(adapter);
 
         PlaybackControlsRowPresenter presenter = new PlaybackControlsRowPresenter(new DetailsPresenter());
@@ -225,7 +247,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     private void loadMovie() {
         TorrentOptions torrentOptions = new TorrentOptions.Builder()
                 .saveLocation(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
-                .removeFilesAfterStop(true)
+//                .removeFilesAfterStop(true)
                 .build();
 
         mTorrentStream = TorrentStream.init(torrentOptions);
@@ -240,12 +262,6 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
             @Override
             public void onStreamStarted(Torrent torrent) {
                 Log.d("Torrent", "Started");
-                mProgressDisposable = Observable.interval(1, TimeUnit.SECONDS)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribeOn(Schedulers.io())
-                        .subscribe(aLong -> {
-                            Torrent.State state = torrent.getState();
-                        });
             }
 
             @Override
@@ -311,6 +327,8 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
                         .subscribeOn(Schedulers.io())
                         .takeWhile(aLong -> mPlayer != null)
                         .subscribe(aLong -> {
+                            mTorrentProgress.setText(String.valueOf(mLastStatus.progress));
+                            mDownloadRate.setText(String.format("%s MB/SEC", String.valueOf(mLastStatus.downloadSpeed / 1024 / 1024)));
                             if (mPlayer != null) {
                                 mControlsRow.setCurrentTimeLong(mPlayer.getCurrentPosition());
                                 mGlue.notifyPlaybackRowChanged();
@@ -324,6 +342,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
                     mControlsRow.setBufferedProgressLong((long) ((streamStatus.progress / 100) * mPlayer.getDuration()));
                     mGlue.notifyPlaybackRowChanged();
                 }
+                mLastStatus = streamStatus;
                 Log.d("Torrent", "Progress " + streamStatus.progress);
             }
 
@@ -333,7 +352,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
             }
         });
 
-        mTorrentStream.startStream("http://tracktor.in/td.php?s=MIEVwylovFE2e0c%2BWcU4CgbCHT0gJ3eXueMcmu8N1i073FQ2M0pr9UZs78TwESm0r9sBcW7OHyITZ9xXsbLF0pcYag0aiH3q%2FQH6mTtGkx%2FsdSYJAeEWhDOx4cstHqZyYACZEw%3D%3D");
+        mTorrentStream.startStream(mSelectedLink.getUrl());
     }
 
     private void loadData() {

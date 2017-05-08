@@ -24,7 +24,7 @@ public class JobHelper {
         mDatabaseManager = new DatabaseManager();
     }
 
-    public void scheduleTvShowSeasonsUpdate(int id, String alias) {
+    public void scheduleTvShowUpdate(int id, String alias) {
         mJobManager.addJobInBackground(new TvShowSeasonsFetchJob(id, alias));
     }
 

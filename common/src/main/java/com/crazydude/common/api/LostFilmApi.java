@@ -38,6 +38,10 @@ public class LostFilmApi implements Api {
     private Retrofit mRetrofitGsonless;
     private LostFilmService mLostFilmService;
 
+    public enum SearchType {
+        RATING, NAME, DATE;
+    }
+
     public LostFilmApi() {
         mRetrofit = new Retrofit.Builder()
                 .baseUrl("https://www.lostfilm.tv/")
@@ -117,6 +121,10 @@ public class LostFilmApi implements Api {
         return mLostFilmServiceGsonless.getTvShowSeasons(alias);
     }
 
+    public Observable<TvShowDetails> getTvShowDetails(String alias) {
+        return mLostFilmServiceGsonless.getTvShowDetails(alias);
+    }
+
     public Observable<DownloadLink[]> getTvShowDownloadLink(int tvShowId, String seasonId, String episodeId) {
         return mLostFilmServiceGsonless.getTvShowHash(tvShowId, seasonId, episodeId)
                 .flatMap(new Function<String, ObservableSource<DownloadLink[]>>() {
@@ -150,9 +158,5 @@ public class LostFilmApi implements Api {
                     }
                 }).map(loginResponse -> new LoginResult(user.getLogin(), user.getPassword(),
                         loginResponse.isSuccess()));
-    }
-
-    public enum SearchType {
-        RATING, NAME, DATE;
     }
 }

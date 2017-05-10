@@ -89,9 +89,6 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         TvShow selectedTvShow = (TvShow) item;
         mJobHelper.scheduleTvShowUpdate(selectedTvShow.getId(), selectedTvShow.getAlias());
         EventBus.getDefault().post(new OnTvShowSelectedEvent(selectedTvShow.getId()));
-/*        Intent intent = new Intent(getActivity(), TvShowActivity.class);
-        intent.putExtra(TvShowActivity.EXTRA_TVSHOW_ID, ((TvShow) item).getId());
-        startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(getActivity()).toBundle());*/
     }
 
     @Override

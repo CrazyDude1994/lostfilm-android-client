@@ -35,7 +35,7 @@
         </activity>
 
         <activity android:name=".activity.LoginActivity"/>
-        <activity android:name=".activity.TvShowActivity"/>
+        <activity android:name=".activity.SeasonListActivity"/>
         <activity android:name=".activity.PlayerActivity"/>
     </application>
 

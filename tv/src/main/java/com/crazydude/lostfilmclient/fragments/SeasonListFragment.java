@@ -1,7 +1,5 @@
 package com.crazydude.lostfilmclient.fragments;
 
-import android.app.ActivityOptions;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
@@ -23,8 +21,7 @@ import com.crazydude.common.db.models.Season;
 import com.crazydude.common.db.models.TvShow;
 import com.crazydude.common.utils.Utils;
 import com.crazydude.lostfilmclient.R;
-import com.crazydude.lostfilmclient.activity.PlayerActivity;
-import com.crazydude.lostfilmclient.activity.TvShowActivity;
+import com.crazydude.lostfilmclient.activity.SeasonListActivity;
 import com.crazydude.lostfilmclient.presenters.EpisodePresenter;
 import com.crazydude.lostfilmclient.utils.DebouncedImageLoader;
 
@@ -34,7 +31,7 @@ import io.realm.RealmChangeListener;
  * Created by Crazy on 10.01.2017.
  */
 
-public class TvShowFragment extends BrowseFragment implements OnItemViewClickedListener, RealmChangeListener<TvShow>, OnItemViewSelectedListener {
+public abstract class SeasonListFragment extends BrowseFragment implements OnItemViewClickedListener, RealmChangeListener<TvShow>, OnItemViewSelectedListener {
 
     private int mTvShowId;
     private DatabaseManager mDatabaseManager;
@@ -51,7 +48,6 @@ public class TvShowFragment extends BrowseFragment implements OnItemViewClickedL
         }
     }
 
-
     @Override
     public void onChange(TvShow element) {
         Log.d("TvShow", "Realm updated");
@@ -59,21 +55,13 @@ public class TvShowFragment extends BrowseFragment implements OnItemViewClickedL
     }
 
     @Override
-    public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
-        Episode episode = (Episode) item;
-
-        Intent intent = new Intent(getActivity(), PlayerActivity.class);
-        intent.putExtra(PlayerActivity.EXTRA_EPISODE_ID, episode.getId());
-        intent.putExtra(PlayerActivity.EXTRA_SEASON_ID, episode.getSeason().getId());
-        intent.putExtra(PlayerActivity.EXTRA_TV_SHOW_ID, episode.getSeason().getTvShow().getId());
-        startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(getActivity()).toBundle());
-    }
+    public abstract void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Bundle arguments = getArguments();
-        mTvShowId = arguments.getInt(TvShowActivity.EXTRA_TVSHOW_ID);
+        mTvShowId = arguments.getInt(SeasonListActivity.EXTRA_TVSHOW_ID);
         mDatabaseManager = new DatabaseManager();
         setupUI();
     }

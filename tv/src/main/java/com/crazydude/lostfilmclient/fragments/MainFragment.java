@@ -4,7 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
+import android.support.v17.leanback.app.GuidedStepFragment;
+import android.support.v17.leanback.app.HeadersFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
+import android.support.v17.leanback.widget.DividerRow;
 import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
@@ -12,8 +15,10 @@ import android.support.v17.leanback.widget.OnItemViewClickedListener;
 import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
+import android.support.v17.leanback.widget.RowHeaderPresenter;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.util.DisplayMetrics;
+import android.view.View;
 
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.TvShow;
@@ -22,6 +27,7 @@ import com.crazydude.common.jobs.JobHelper;
 import com.crazydude.common.utils.Utils;
 import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.activity.LoginActivity;
+import com.crazydude.lostfilmclient.presenters.MenuPresenter;
 import com.crazydude.lostfilmclient.presenters.TvShowPresenter;
 import com.crazydude.lostfilmclient.utils.DebouncedImageLoader;
 
@@ -47,6 +53,9 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
     private Map<String, ArrayObjectAdapter> mAlphabetAdapterMap = new HashMap<>();
     private DebouncedImageLoader mImageLoader;
 
+    private static final int OTHERS_ID = 0;
+    private static final int SETTINGS_ID = 0;
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdate(TvShowsUpdateEvent event) {
         List<TvShow> tvShows = mDatabaseManager.getTvShows(event.getTvShows());
@@ -67,6 +76,10 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         mJobHelper = new JobHelper(getActivity());
         mDatabaseManager = new DatabaseManager();
         mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+        mCategoriesAdapter.add(new DividerRow());
+        ArrayObjectAdapter othersAdapter = new ArrayObjectAdapter(new MenuPresenter());
+        othersAdapter.add("Настройки");
+        mCategoriesAdapter.add(new ListRow(OTHERS_ID, new HeaderItem("Прочее"), othersAdapter));
         setAdapter(mCategoriesAdapter);
         prepareBackgroundManager();
         setupUI();
@@ -86,9 +99,13 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
 
     @Override
     public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
-        TvShow selectedTvShow = (TvShow) item;
-        mJobHelper.scheduleTvShowUpdate(selectedTvShow.getId(), selectedTvShow.getAlias());
-        EventBus.getDefault().post(new OnTvShowSelectedEvent(selectedTvShow.getId()));
+        if (item instanceof TvShow) {
+            TvShow selectedTvShow = (TvShow) item;
+            mJobHelper.scheduleTvShowUpdate(selectedTvShow.getId(), selectedTvShow.getAlias());
+            EventBus.getDefault().post(new OnTvShowSelectedEvent(selectedTvShow.getId()));
+        } else if (row.getId() == SETTINGS_ID) {
+            onSettingsClicked();
+        }
     }
 
     @Override
@@ -108,6 +125,10 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         EventBus.getDefault().register(this);
     }
 
+    private void onSettingsClicked() {
+        GuidedStepFragment.add(getFragmentManager(), new SettingsFragment(), R.id.placeholder);
+    }
+
     private void updateTvShows(List<TvShow> tvShows) {
         for (TvShow tvShow : tvShows) {
             String firstLetter = tvShow.getTitle().substring(0, 1).toUpperCase();
@@ -115,7 +136,7 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
                 ArrayObjectAdapter tvShowsAdapter = new ArrayObjectAdapter(new TvShowPresenter());
                 tvShowsAdapter.add(tvShow);
                 mAlphabetAdapterMap.put(firstLetter, tvShowsAdapter);
-                mCategoriesAdapter.add(new ListRow(new HeaderItem(firstLetter), tvShowsAdapter));
+                mCategoriesAdapter.add(mCategoriesAdapter.size() - 2, new ListRow(new HeaderItem(firstLetter), tvShowsAdapter));
             } else {
                 ArrayObjectAdapter tvShowsAdapter = mAlphabetAdapterMap.get(firstLetter);
                 boolean found = false;

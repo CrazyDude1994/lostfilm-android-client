@@ -5,9 +5,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v17.leanback.app.VideoFragment;
 import android.support.v17.leanback.app.VideoFragmentGlueHost;
 import android.support.v17.leanback.widget.Action;
@@ -17,56 +15,31 @@ import android.support.v17.leanback.widget.OnActionClickedListener;
 import android.support.v17.leanback.widget.PlaybackControlsRow;
 import android.support.v17.leanback.widget.PlaybackControlsRowPresenter;
 import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.crazydude.common.api.LostFilmApi;
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.DownloadLink;
+import com.crazydude.common.player.AndroidPlayer;
+import com.crazydude.common.torrent.AndroidTorrent;
+import com.crazydude.common.torrent.Torrent;
 import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.presenters.DetailsPresenter;
-import com.github.se_bastiaan.torrentstream.StreamStatus;
-import com.github.se_bastiaan.torrentstream.Torrent;
-import com.github.se_bastiaan.torrentstream.TorrentOptions;
-import com.github.se_bastiaan.torrentstream.TorrentStream;
-import com.github.se_bastiaan.torrentstream.listeners.TorrentListener;
-import com.google.android.exoplayer2.DefaultLoadControl;
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.LoadControl;
-import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.AdaptiveVideoTrackSelection;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.util.Util;
 
-import java.util.concurrent.TimeUnit;
+import java.io.File;
 
-import io.reactivex.Observable;
 import io.reactivex.Observer;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
 
 
 /**
  * Created by Crazy on 11.01.2017.
  */
 
-public class PlayerActivity extends Activity implements Observer<DownloadLink[]>, SurfaceHolder.Callback, OnActionClickedListener {
+public class PlayerActivity extends Activity implements Observer<DownloadLink[]>,
+        SurfaceHolder.Callback, OnActionClickedListener, Torrent.Listener, AndroidPlayer.Listener {
 
     public static final String EXTRA_EPISODE_ID = "extra_episode_id";
     public static final String EXTRA_SEASON_ID = "extra_season_id";
@@ -78,36 +51,39 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     private String mEpisodeId;
     private DatabaseManager mDatabaseManager;
     private LostFilmApi mLostFilmApi;
-    private Disposable mDisposable;
     private DownloadLink mSelectedLink;
-    private TorrentStream mTorrentStream;
     private SurfaceHolder mSurfaceHolder;
-    private SimpleExoPlayer mPlayer;
     private PlaybackControlsRow mControlsRow;
     private VideoFragmentGlueHost mGlue;
     private PlaybackControlsRow.PlayPauseAction mPlayPauseAction;
-    private Disposable mProgressDisposable;
     private PlaybackControlsRow.RewindAction mRewindAction;
     private PlaybackControlsRow.FastForwardAction mFastForwardAction;
     private TextView mTorrentProgress;
     private TextView mDownloadRate;
-    private StreamStatus mLastStatus;
+    private Torrent mTorrent;
+    private AndroidPlayer mPlayer;
+    private long mVideoDuration = 0;
+    private Disposable mDownloadLinkDisposable;
 
     @Override
     public void onActionClicked(Action action) {
         if (action == mPlayPauseAction) {
             mPlayPauseAction.nextIndex();
             if (mPlayer != null) {
-                mPlayer.setPlayWhenReady(mPlayPauseAction.getIndex() == PlaybackControlsRow.PlayPauseAction.PAUSE);
+                if (isCurrentActionPlaying()) {
+                    mPlayer.play();
+                } else {
+                    mPlayer.pause();
+                }
             }
             mGlue.notifyPlaybackRowChanged();
         } else if (action == mFastForwardAction) {
             if (mPlayer != null) {
-                mPlayer.seekTo(mPlayer.getCurrentPosition() + 10000);
+                mPlayer.seekForward(10000);
             }
         } else if (action == mRewindAction) {
             if (mPlayer != null) {
-                mPlayer.seekTo(mPlayer.getCurrentPosition() - 10000);
+                mPlayer.seekBackward(10000);
             }
         }
     }
@@ -129,7 +105,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
 
     @Override
     public void onSubscribe(Disposable d) {
-        mDisposable = d;
+        mDownloadLinkDisposable = d;
     }
 
     @Override
@@ -138,18 +114,20 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
         for (int i = 0; i < downloadLinks.length; i++) {
             strings[i] = downloadLinks[i].getName();
         }
-        new AlertDialog.Builder(this).setItems(strings, (dialogInterface, i) -> {
-            mSelectedLink = downloadLinks[i];
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-                    PackageManager.PERMISSION_GRANTED) {
-                loadMovie();
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
-                                Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        MY_PERMISSIONS_REQUEST_PLAY_MOVIE);
-            }
-        }).show();
+        new AlertDialog.Builder(this)
+                .setOnCancelListener(dialog -> finish())
+                .setItems(strings, (dialogInterface, i) -> {
+                    mSelectedLink = downloadLinks[i];
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                            PackageManager.PERMISSION_GRANTED) {
+                        loadMovie();
+                    } else {
+                        ActivityCompat.requestPermissions(this,
+                                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
+                                        Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                MY_PERMISSIONS_REQUEST_PLAY_MOVIE);
+                    }
+                }).show();
     }
 
     @Override
@@ -159,6 +137,42 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     @Override
     public void onComplete() {
 
+    }
+
+    @Override
+    public void onProgressUpdate(long progress) {
+        mControlsRow.setCurrentTimeLong(progress);
+        mGlue.notifyPlaybackRowChanged();
+    }
+
+    @Override
+    public void onPlayerReady(long duration) {
+        mVideoDuration = duration;
+        mControlsRow.setTotalTimeLong(duration);
+        mGlue.notifyPlaybackRowChanged();
+    }
+
+    @Override
+    public void onPlayerError(boolean unsupportedFormat) {
+        Toast.makeText(PlayerActivity.this, "Данный формат не поддерживается. Выберите другой", Toast.LENGTH_LONG).show();
+        loadData();
+        mPlayer.stop();
+        mTorrent.stop();
+    }
+
+    @Override
+    public void onTorrentReadyToStream(File videoFile) {
+        mPlayer = new AndroidPlayer(this, mSurfaceHolder, videoFile, this, isCurrentActionPlaying());
+    }
+
+    @Override
+    public void onTorrentProgress(float progress, long downloadSpeed) {
+        if (mVideoDuration > 0) {
+            mControlsRow.setBufferedProgressLong((long) ((progress / 100) * mVideoDuration));
+            mTorrentProgress.setText(String.valueOf(progress));
+            mDownloadRate.setText(String.format("%s MB/SEC", String.valueOf(downloadSpeed / 1024 / 1024)));
+            mGlue.notifyPlaybackRowChanged();
+        }
     }
 
     @Override
@@ -189,18 +203,14 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     protected void onDestroy() {
         super.onDestroy();
         mDatabaseManager.close();
-        if (mDisposable != null && !mDisposable.isDisposed()) {
-            mDisposable.dispose();
-        }
-        if (mTorrentStream != null) {
-            mTorrentStream.stopStream();
-            mTorrentStream = null;
+        if (mDownloadLinkDisposable != null) {
+            mDownloadLinkDisposable.dispose();
         }
         if (mPlayer != null) {
-            mPlayer.release();
+            mPlayer.stop();
         }
-        if (mProgressDisposable != null) {
-            mProgressDisposable.dispose();
+        if (mTorrent != null) {
+            mTorrent.stop();
         }
     }
 
@@ -218,6 +228,10 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
                 }
                 break;
         }
+    }
+
+    private boolean isCurrentActionPlaying() {
+        return mPlayPauseAction.getIndex() == PlaybackControlsRow.PlayPauseAction.PAUSE;
     }
 
     private void setupUI() {
@@ -245,113 +259,12 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     }
 
     private void loadMovie() {
-        TorrentOptions torrentOptions = new TorrentOptions.Builder()
-                .saveLocation(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
-//                .removeFilesAfterStop(true)
-                .build();
+        startTorrent();
+    }
 
-        mTorrentStream = TorrentStream.init(torrentOptions);
-        mTorrentStream.addListener(new TorrentListener() {
-            @Override
-            public void onStreamPrepared(Torrent torrent) {
-                Log.d("Torrent", "Prepared");
-                torrent.startDownload();
-            }
-
-            @Override
-            public void onStreamStarted(Torrent torrent) {
-                Log.d("Torrent", "Started");
-            }
-
-            @Override
-            public void onStreamError(Torrent torrent, Exception e) {
-                Log.d("Torrent", "Error: " + e.getMessage());
-            }
-
-            @Override
-            public void onStreamReady(Torrent torrent) {
-                Log.d("Torrent", "Ready");
-                torrent.getTorrentHandle().setSequentialDownload(true);
-                BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
-                TrackSelection.Factory videoTrackSelectionFactory =
-                        new AdaptiveVideoTrackSelection.Factory(bandwidthMeter);
-                TrackSelector trackSelector =
-                        new DefaultTrackSelector(videoTrackSelectionFactory);
-
-                LoadControl loadControl = new DefaultLoadControl();
-
-                mPlayer = ExoPlayerFactory.newSimpleInstance(PlayerActivity.this, trackSelector, loadControl);
-                mPlayer.setVideoSurfaceHolder(mSurfaceHolder);
-                DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(PlayerActivity.this,
-                        Util.getUserAgent(PlayerActivity.this, "yourApplicationName"));
-                MediaSource mediaSource = new ExtractorMediaSource(Uri.fromFile(torrent.getVideoFile()), dataSourceFactory,
-                        new DefaultExtractorsFactory(), null, null);
-                mPlayer.prepare(mediaSource);
-                mPlayer.setPlayWhenReady(mPlayPauseAction.getIndex() == PlaybackControlsRow.PlayPauseAction.PAUSE);
-                mPlayer.addListener(new ExoPlayer.EventListener() {
-                    @Override
-                    public void onTimelineChanged(Timeline timeline, Object manifest) {
-                    }
-
-                    @Override
-                    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-                    }
-
-                    @Override
-                    public void onLoadingChanged(boolean isLoading) {
-
-                    }
-
-                    @Override
-                    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-                        if (playbackState == ExoPlayer.STATE_READY) {
-                            mControlsRow.setTotalTimeLong(mPlayer.getDuration());
-                            mGlue.notifyPlaybackRowChanged();
-                        }
-                    }
-
-                    @Override
-                    public void onPlayerError(ExoPlaybackException error) {
-
-                    }
-
-                    @Override
-                    public void onPositionDiscontinuity() {
-
-                    }
-                });
-                mProgressDisposable = Observable.interval(1, TimeUnit.SECONDS)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribeOn(Schedulers.io())
-                        .takeWhile(aLong -> mPlayer != null)
-                        .subscribe(aLong -> {
-                            mTorrentProgress.setText(String.valueOf(mLastStatus.progress));
-                            mDownloadRate.setText(String.format("%s MB/SEC", String.valueOf(mLastStatus.downloadSpeed / 1024 / 1024)));
-                            if (mPlayer != null) {
-                                mControlsRow.setCurrentTimeLong(mPlayer.getCurrentPosition());
-                                mGlue.notifyPlaybackRowChanged();
-                            }
-                        });
-            }
-
-            @Override
-            public void onStreamProgress(Torrent torrent, StreamStatus streamStatus) {
-                if (mPlayer != null && mPlayer.getDuration() > 0) {
-                    mControlsRow.setBufferedProgressLong((long) ((streamStatus.progress / 100) * mPlayer.getDuration()));
-                    mGlue.notifyPlaybackRowChanged();
-                }
-                mLastStatus = streamStatus;
-                Log.d("Torrent", "Progress " + streamStatus.progress);
-            }
-
-            @Override
-            public void onStreamStopped() {
-                Log.d("Torrent", "Stopped");
-            }
-        });
-
-        mTorrentStream.startStream(mSelectedLink.getUrl());
+    private void startTorrent() {
+        mTorrent = new AndroidTorrent(this);
+        mTorrent.startTorrent(mSelectedLink.getUrl());
     }
 
     private void loadData() {

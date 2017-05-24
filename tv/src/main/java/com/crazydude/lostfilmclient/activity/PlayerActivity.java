@@ -167,6 +167,8 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
         loadData();
         mPlayer.stop();
         mTorrent.stop();
+        getLifecycle().removeObserver(mPlayer);
+        getLifecycle().removeObserver(mTorrent);
     }
 
     @Override

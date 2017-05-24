@@ -16,6 +16,8 @@ import android.support.v17.leanback.widget.PlaybackControlsRow;
 import android.support.v17.leanback.widget.PlaybackControlsRowPresenter;
 import android.support.v4.app.ActivityCompat;
 import android.view.SurfaceHolder;
+import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -64,6 +66,8 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
     private AndroidPlayer mPlayer;
     private long mVideoDuration = 0;
     private Disposable mDownloadLinkDisposable;
+    private Action mDebugInfoAction;
+    private LinearLayout mDebugInfoView;
 
     @Override
     public void onActionClicked(Action action) {
@@ -86,6 +90,8 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
             if (mPlayer != null) {
                 mPlayer.seekBackward(10000);
             }
+        } else if (action == mDebugInfoAction) {
+            switchDebugInfo();
         }
     }
 
@@ -186,6 +192,7 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
 
         mTorrentProgress = (TextView) findViewById(R.id.torrent_progress);
         mDownloadRate = (TextView) findViewById(R.id.download_speed);
+        mDebugInfoView = (LinearLayout) findViewById(R.id.debug_info);
 
         Intent intent = getIntent();
         mTvShowId = intent.getIntExtra(EXTRA_TV_SHOW_ID, -1);
@@ -227,6 +234,10 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
         }
     }
 
+    private void switchDebugInfo() {
+        mDebugInfoView.setVisibility(mDebugInfoView.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
+    }
+
     private boolean isCurrentActionPlaying() {
         return mPlayPauseAction.getIndex() == PlaybackControlsRow.PlayPauseAction.PAUSE;
     }
@@ -244,10 +255,11 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
         mPlayPauseAction.nextIndex(); // set to play
         mRewindAction = new PlaybackControlsRow.RewindAction(this);
         mFastForwardAction = new PlaybackControlsRow.FastForwardAction(this);
+        mDebugInfoAction = new Action(0, null, null, getDrawable(R.drawable.ic_info_white_24dp));
         adapter.add(mRewindAction);
         adapter.add(mPlayPauseAction);
         adapter.add(mFastForwardAction);
-        adapter.add(new Action(0, "Show debug"));
+        adapter.add(mDebugInfoAction);
         mControlsRow.setPrimaryActionsAdapter(adapter);
 
         PlaybackControlsRowPresenter presenter = new PlaybackControlsRowPresenter(new DetailsPresenter());

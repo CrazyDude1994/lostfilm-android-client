@@ -1,9 +1,10 @@
 package com.crazydude.common.torrent;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.OnLifecycleEvent;
 import android.os.Environment;
 import android.util.Log;
 
-import com.crazydude.common.player.AndroidPlayer;
 import com.github.se_bastiaan.torrentstream.StreamStatus;
 import com.github.se_bastiaan.torrentstream.TorrentOptions;
 import com.github.se_bastiaan.torrentstream.TorrentStream;
@@ -34,6 +35,12 @@ public class AndroidTorrent implements Torrent, TorrentListener {
         mTorrentStream.startStream(url);
     }
 
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    @Override
+    public void stop() {
+        mTorrentStream.stopStream();
+    }
+
     @Override
     public void onStreamPrepared(com.github.se_bastiaan.torrentstream.Torrent torrent) {
         Log.d("Torrent", "Prepared");
@@ -57,11 +64,6 @@ public class AndroidTorrent implements Torrent, TorrentListener {
         if (mListener != null) {
             mListener.onTorrentReadyToStream(torrent.getVideoFile());
         }
-    }
-
-    @Override
-    public void stop() {
-        mTorrentStream.stopStream();
     }
 
     @Override

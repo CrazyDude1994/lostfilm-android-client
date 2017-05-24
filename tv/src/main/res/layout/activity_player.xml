@@ -10,6 +10,7 @@
         android:layout_height="match_parent"/>
 
     <LinearLayout
+        android:id="@+id/debug_info"
         android:layout_width="240dp"
         android:layout_height="wrap_content"
         android:background="#60000000"

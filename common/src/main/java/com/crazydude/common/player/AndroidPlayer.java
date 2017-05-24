@@ -93,6 +93,7 @@ public class AndroidPlayer implements Player, ExoPlayer.EventListener {
         mPlayer.setPlayWhenReady(false);
     }
 
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     @Override
     public void stop() {
         mPlayer.stop();

@@ -25,6 +25,7 @@ import com.crazydude.common.api.LostFilmApi;
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.DownloadLink;
 import com.crazydude.common.player.AndroidPlayer;
+import com.crazydude.common.player.Player;
 import com.crazydude.common.torrent.AndroidTorrent;
 import com.crazydude.common.torrent.Torrent;
 import com.crazydude.lostfilmclient.R;
@@ -63,7 +64,7 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
     private TextView mTorrentProgress;
     private TextView mDownloadRate;
     private Torrent mTorrent;
-    private AndroidPlayer mPlayer;
+    private Player mPlayer;
     private long mVideoDuration = 0;
     private Disposable mDownloadLinkDisposable;
     private Action mDebugInfoAction;

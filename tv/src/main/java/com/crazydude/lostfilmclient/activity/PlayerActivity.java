@@ -1,8 +1,8 @@
 package com.crazydude.lostfilmclient.activity;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
+import android.arch.lifecycle.LifecycleActivity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -38,7 +38,7 @@ import io.reactivex.disposables.Disposable;
  * Created by Crazy on 11.01.2017.
  */
 
-public class PlayerActivity extends Activity implements Observer<DownloadLink[]>,
+public class PlayerActivity extends LifecycleActivity implements Observer<DownloadLink[]>,
         SurfaceHolder.Callback, OnActionClickedListener, Torrent.Listener, AndroidPlayer.Listener {
 
     public static final String EXTRA_EPISODE_ID = "extra_episode_id";
@@ -75,6 +75,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
                 } else {
                     mPlayer.pause();
                 }
+                mGlue.setFadingEnabled(isCurrentActionPlaying());
             }
             mGlue.notifyPlaybackRowChanged();
         } else if (action == mFastForwardAction) {
@@ -132,6 +133,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
 
     @Override
     public void onError(Throwable e) {
+
     }
 
     @Override
@@ -163,6 +165,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     @Override
     public void onTorrentReadyToStream(File videoFile) {
         mPlayer = new AndroidPlayer(this, mSurfaceHolder, videoFile, this, isCurrentActionPlaying());
+        getLifecycle().addObserver(mPlayer);
     }
 
     @Override
@@ -170,7 +173,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
         if (mVideoDuration > 0) {
             mControlsRow.setBufferedProgressLong((long) ((progress / 100) * mVideoDuration));
             mTorrentProgress.setText(String.valueOf(progress));
-            mDownloadRate.setText(String.format("%s MB/SEC", String.valueOf(downloadSpeed / 1024 / 1024)));
+            mDownloadRate.setText(String.format("%s MB/SEC", String.valueOf(downloadSpeed / 1024f / 1024)));
             mGlue.notifyPlaybackRowChanged();
         }
     }
@@ -193,6 +196,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
         mSeasonId = intent.getStringExtra(EXTRA_SEASON_ID);
 
         mDatabaseManager = new DatabaseManager();
+        getLifecycle().addObserver(mDatabaseManager);
         mLostFilmApi = LostFilmApi.getInstance();
 
         loadData();
@@ -202,15 +206,8 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mDatabaseManager.close();
         if (mDownloadLinkDisposable != null) {
             mDownloadLinkDisposable.dispose();
-        }
-        if (mPlayer != null) {
-            mPlayer.stop();
-        }
-        if (mTorrent != null) {
-            mTorrent.stop();
         }
     }
 
@@ -250,6 +247,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
         adapter.add(mRewindAction);
         adapter.add(mPlayPauseAction);
         adapter.add(mFastForwardAction);
+        adapter.add(new Action(0, "Show debug"));
         mControlsRow.setPrimaryActionsAdapter(adapter);
 
         PlaybackControlsRowPresenter presenter = new PlaybackControlsRowPresenter(new DetailsPresenter());
@@ -264,6 +262,7 @@ public class PlayerActivity extends Activity implements Observer<DownloadLink[]>
 
     private void startTorrent() {
         mTorrent = new AndroidTorrent(this);
+        getLifecycle().addObserver(mTorrent);
         mTorrent.startTorrent(mSelectedLink.getUrl());
     }
 

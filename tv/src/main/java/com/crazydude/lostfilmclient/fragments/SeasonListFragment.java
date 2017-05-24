@@ -1,7 +1,9 @@
 package com.crazydude.lostfilmclient.fragments;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleOwner;
+import android.arch.lifecycle.LifecycleRegistry;
 import android.os.Bundle;
-import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.HeaderItem;
@@ -12,18 +14,17 @@ import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
-import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.Episode;
 import com.crazydude.common.db.models.Season;
 import com.crazydude.common.db.models.TvShow;
-import com.crazydude.common.utils.Utils;
 import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.activity.SeasonListActivity;
 import com.crazydude.lostfilmclient.presenters.EpisodePresenter;
-import com.crazydude.lostfilmclient.utils.DebouncedImageLoader;
+
+import org.greenrobot.eventbus.EventBus;
 
 import io.realm.RealmChangeListener;
 
@@ -31,20 +32,19 @@ import io.realm.RealmChangeListener;
  * Created by Crazy on 10.01.2017.
  */
 
-public abstract class SeasonListFragment extends BrowseFragment implements OnItemViewClickedListener, RealmChangeListener<TvShow>, OnItemViewSelectedListener {
+public abstract class SeasonListFragment extends BrowseFragment implements OnItemViewClickedListener,
+        RealmChangeListener<TvShow>, OnItemViewSelectedListener, LifecycleOwner {
 
     private int mTvShowId;
     private DatabaseManager mDatabaseManager;
     private ArrayObjectAdapter mCategoriesAdapter;
     private TvShow mTvShow;
-    private BackgroundManager mBackgroundManager;
-    private DisplayMetrics mMetrics;
-    private DebouncedImageLoader mImageLoader;
+    private Lifecycle mLifecycle = new LifecycleRegistry(this);
 
     @Override
     public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
-        if (item instanceof Utils.PosterProvider) {
-            mImageLoader.feed((Utils.PosterProvider) item);
+        if (item instanceof Episode) {
+            EventBus.getDefault().post(new EpisodeSelectedEvent(((Episode) item)));
         }
     }
 
@@ -63,18 +63,16 @@ public abstract class SeasonListFragment extends BrowseFragment implements OnIte
         Bundle arguments = getArguments();
         mTvShowId = arguments.getInt(SeasonListActivity.EXTRA_TVSHOW_ID);
         mDatabaseManager = new DatabaseManager();
+        getLifecycle().addObserver(mDatabaseManager);
         setupUI();
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mDatabaseManager.close();
-        mImageLoader.close();
+    public Lifecycle getLifecycle() {
+        return mLifecycle;
     }
 
     private void setupUI() {
-        prepareBackgroundManager();
         loadData();
         setOnItemViewClickedListener(this);
         setOnItemViewSelectedListener(this);
@@ -100,11 +98,16 @@ public abstract class SeasonListFragment extends BrowseFragment implements OnIte
         setAdapter(mCategoriesAdapter);
     }
 
-    private void prepareBackgroundManager() {
-        mBackgroundManager = BackgroundManager.getInstance(getActivity());
-        mBackgroundManager.attach(getActivity().getWindow());
-        mMetrics = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
-        mImageLoader = new DebouncedImageLoader(getActivity(), mBackgroundManager, mMetrics.widthPixels, mMetrics.heightPixels);
+    public static class EpisodeSelectedEvent {
+
+        private Episode mEpisode;
+
+        public EpisodeSelectedEvent(Episode episode) {
+            mEpisode = episode;
+        }
+
+        public Episode getEpisode() {
+            return mEpisode;
+        }
     }
 }

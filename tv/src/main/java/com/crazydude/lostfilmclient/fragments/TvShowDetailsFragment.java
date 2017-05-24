@@ -1,6 +1,9 @@
 package com.crazydude.lostfilmclient.fragments;
 
 import android.app.ActivityOptions;
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleOwner;
+import android.arch.lifecycle.LifecycleRegistry;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -30,12 +33,14 @@ import io.realm.RealmChangeListener;
  * Created by Crazy on 07.05.2017.
  */
 
-public class TvShowDetailsFragment extends DetailsFragment implements RealmChangeListener<TvShow>, OnActionClickedListener {
+public class TvShowDetailsFragment extends DetailsFragment implements RealmChangeListener<TvShow>,
+        OnActionClickedListener, LifecycleOwner {
 
     private ArrayObjectAdapter mRowsAdapter;
     private DatabaseManager mDatabaseManager;
     private TvShow mTvShow;
     private DetailsOverviewRow mDetailsOverviewRow;
+    private Lifecycle mLifecycle = new LifecycleRegistry(this);
 
     @Override
     public void onActionClicked(Action action) {
@@ -63,6 +68,7 @@ public class TvShowDetailsFragment extends DetailsFragment implements RealmChang
         super.onCreate(savedInstanceState);
 
         mDatabaseManager = new DatabaseManager();
+        getLifecycle().addObserver(mDatabaseManager);
 
         Bundle arguments = getArguments();
         int tvshowId = arguments.getInt("tvshow_id");
@@ -74,9 +80,14 @@ public class TvShowDetailsFragment extends DetailsFragment implements RealmChang
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mDatabaseManager.close();
+    public void onStart() {
+        super.onStart();
+        EventBus.getDefault().post(new TvShowDetailsShowed(mTvShow));
+    }
+
+    @Override
+    public Lifecycle getLifecycle() {
+        return mLifecycle;
     }
 
     private void buildDetails() {
@@ -94,8 +105,6 @@ public class TvShowDetailsFragment extends DetailsFragment implements RealmChang
 
         mDetailsOverviewRow = new DetailsOverviewRow(mTvShow);
 
-        // Add images and action buttons to the details view
-//        mDetailsOverviewRow.setImageDrawable();
         Glide.with(this)
                 .load(mTvShow.providePosterURL())
                 .asBitmap()
@@ -113,5 +122,17 @@ public class TvShowDetailsFragment extends DetailsFragment implements RealmChang
         mRowsAdapter.add(mDetailsOverviewRow);
 
         setAdapter(mRowsAdapter);
+    }
+
+    public class TvShowDetailsShowed {
+        private TvShow mTvShow;
+
+        public TvShowDetailsShowed(TvShow tvShow) {
+            mTvShow = tvShow;
+        }
+
+        public TvShow getTvShow() {
+            return mTvShow;
+        }
     }
 }

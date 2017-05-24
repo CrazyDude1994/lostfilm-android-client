@@ -1,5 +1,8 @@
 package com.crazydude.common.player;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 import android.net.Uri;
 import android.view.SurfaceHolder;
@@ -108,6 +111,11 @@ public class AndroidPlayer implements Player, ExoPlayer.EventListener {
     @Override
     public void seekBackward(long ms) {
         mPlayer.seekTo(mPlayer.getCurrentPosition() - ms);
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    public void onDestroy() {
+        stop();
     }
 
     @Override

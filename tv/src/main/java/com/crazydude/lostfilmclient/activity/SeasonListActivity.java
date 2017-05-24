@@ -1,19 +1,25 @@
 package com.crazydude.lostfilmclient.activity;
 
-import android.app.Activity;
+import android.arch.lifecycle.LifecycleActivity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v17.leanback.app.BackgroundManager;
+import android.util.DisplayMetrics;
 
 import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.fragments.SeasonDownloadFragment;
 import com.crazydude.lostfilmclient.fragments.SeasonListFragment;
 import com.crazydude.lostfilmclient.fragments.SeasonWatchFragment;
+import com.crazydude.lostfilmclient.utils.DebouncedImageLoader;
+import com.crazydude.lostfilmclient.utils.EventBusWrapper;
+
+import org.greenrobot.eventbus.Subscribe;
 
 /**
  * Created by Crazy on 10.01.2017.
  */
 
-public class SeasonListActivity extends Activity {
+public class SeasonListActivity extends LifecycleActivity {
 
     public static final String EXTRA_TVSHOW_ID = "extra_tvshow_id";
     public static final String EXTRA_MODE = "extra_tvshow_mode";
@@ -23,12 +29,22 @@ public class SeasonListActivity extends Activity {
 
     private int mTvShowId;
     private int mMode;
+    private DebouncedImageLoader mImageLoader;
+    private BackgroundManager mBackgroundManager;
+    private DisplayMetrics mMetrics;
+
+    @Subscribe
+    public void handleEvent(SeasonListFragment.EpisodeSelectedEvent event) {
+        mImageLoader.feed(event.getEpisode());
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_tv_show);
+
+        getLifecycle().addObserver(new EventBusWrapper(this));
 
         Intent intent = getIntent();
         mTvShowId = intent.getIntExtra(EXTRA_TVSHOW_ID, -1);
@@ -52,9 +68,22 @@ public class SeasonListActivity extends Activity {
         bundle.putInt(EXTRA_TVSHOW_ID, mTvShowId);
         seasonListFragment.setArguments(bundle);
 
+        prepareBackgroundManager();
+
         getFragmentManager()
                 .beginTransaction()
                 .replace(R.id.container, seasonListFragment)
                 .commit();
     }
+
+    private void prepareBackgroundManager() {
+        mBackgroundManager = BackgroundManager.getInstance(this);
+        mBackgroundManager.attach(getWindow());
+        mMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
+        mImageLoader = new DebouncedImageLoader(this, mBackgroundManager, mMetrics.widthPixels,
+                mMetrics.heightPixels, getLifecycle());
+        getLifecycle().addObserver(mImageLoader);
+    }
+
 }

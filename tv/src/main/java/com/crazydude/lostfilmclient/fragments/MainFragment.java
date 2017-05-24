@@ -1,11 +1,13 @@
 package com.crazydude.lostfilmclient.fragments;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleOwner;
+import android.arch.lifecycle.LifecycleRegistry;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.app.GuidedStepFragment;
-import android.support.v17.leanback.app.HeadersFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.DividerRow;
 import android.support.v17.leanback.widget.HeaderItem;
@@ -15,10 +17,8 @@ import android.support.v17.leanback.widget.OnItemViewClickedListener;
 import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
-import android.support.v17.leanback.widget.RowHeaderPresenter;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.util.DisplayMetrics;
-import android.view.View;
 
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.TvShow;
@@ -29,7 +29,7 @@ import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.activity.LoginActivity;
 import com.crazydude.lostfilmclient.presenters.MenuPresenter;
 import com.crazydude.lostfilmclient.presenters.TvShowPresenter;
-import com.crazydude.lostfilmclient.utils.DebouncedImageLoader;
+import com.crazydude.lostfilmclient.utils.EventBusWrapper;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -43,18 +43,18 @@ import java.util.Map;
  * Created by Crazy on 08.01.2017.
  */
 
-public class MainFragment extends BrowseFragment implements OnItemViewClickedListener, OnItemViewSelectedListener {
+public class MainFragment extends BrowseFragment implements OnItemViewClickedListener,
+        OnItemViewSelectedListener, LifecycleOwner {
 
+    private static final int OTHERS_ID = 0;
+    private static final int SETTINGS_ID = 0;
     private ArrayObjectAdapter mCategoriesAdapter;
     private JobHelper mJobHelper;
     private DatabaseManager mDatabaseManager;
     private BackgroundManager mBackgroundManager;
     private DisplayMetrics mMetrics;
     private Map<String, ArrayObjectAdapter> mAlphabetAdapterMap = new HashMap<>();
-    private DebouncedImageLoader mImageLoader;
-
-    private static final int OTHERS_ID = 0;
-    private static final int SETTINGS_ID = 0;
+    private LifecycleRegistry mLifecycleRegistry = new LifecycleRegistry(this);
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdate(TvShowsUpdateEvent event) {
@@ -65,23 +65,25 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
 
     @Override
     public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
-        if (item instanceof Utils.PosterProvider) {
-            mImageLoader.feed(((Utils.PosterProvider) item));
+        if (item instanceof TvShow) {
+            EventBus.getDefault().post(new TvShowSelectedEvent((TvShow) item));
         }
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mJobHelper = new JobHelper(getActivity());
+        mJobHelper = new JobHelper(getActivity().getApplicationContext());
         mDatabaseManager = new DatabaseManager();
+        getLifecycle().addObserver(mJobHelper);
+        getLifecycle().addObserver(mDatabaseManager);
+        getLifecycle().addObserver(new EventBusWrapper(this));
         mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
         mCategoriesAdapter.add(new DividerRow());
         ArrayObjectAdapter othersAdapter = new ArrayObjectAdapter(new MenuPresenter());
         othersAdapter.add("Настройки");
         mCategoriesAdapter.add(new ListRow(OTHERS_ID, new HeaderItem("Прочее"), othersAdapter));
         setAdapter(mCategoriesAdapter);
-        prepareBackgroundManager();
         setupUI();
         setOnItemViewClickedListener(this);
         setOnItemViewSelectedListener(this);
@@ -89,29 +91,14 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mJobHelper.close();
-        mDatabaseManager.close();
-        mBackgroundManager.release();
-        mImageLoader.close();
-    }
-
-    @Override
     public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
         if (item instanceof TvShow) {
             TvShow selectedTvShow = (TvShow) item;
             mJobHelper.scheduleTvShowUpdate(selectedTvShow.getId(), selectedTvShow.getAlias());
-            EventBus.getDefault().post(new OnTvShowSelectedEvent(selectedTvShow.getId()));
+            EventBus.getDefault().post(new TvShowClickedEvent(selectedTvShow.getId()));
         } else if (row.getId() == SETTINGS_ID) {
             onSettingsClicked();
         }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -122,7 +109,11 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         } else {
             loadTvShows();
         }
-        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public Lifecycle getLifecycle() {
+        return mLifecycleRegistry;
     }
 
     private void onSettingsClicked() {
@@ -155,14 +146,6 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         }
     }
 
-    private void prepareBackgroundManager() {
-        mBackgroundManager = BackgroundManager.getInstance(getActivity());
-        mBackgroundManager.attach(getActivity().getWindow());
-        mMetrics = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
-        mImageLoader = new DebouncedImageLoader(getActivity(), mBackgroundManager, mMetrics.widthPixels, mMetrics.heightPixels);
-    }
-
     private void setupUI() {
         setBadgeDrawable(getResources().getDrawable(R.drawable.logo, null));
         loadTvShows();
@@ -173,15 +156,27 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         updateTvShows(tvShows);
     }
 
-    public static class OnTvShowSelectedEvent {
+    public static class TvShowClickedEvent {
         private int mId;
 
-        public OnTvShowSelectedEvent(int id) {
+        public TvShowClickedEvent(int id) {
             mId = id;
         }
 
         public int getId() {
             return mId;
+        }
+    }
+
+    public class TvShowSelectedEvent {
+        private TvShow mTvShow;
+
+        public TvShowSelectedEvent(TvShow tvShow) {
+            mTvShow = tvShow;
+        }
+
+        public TvShow getTvShow() {
+            return mTvShow;
         }
     }
 }

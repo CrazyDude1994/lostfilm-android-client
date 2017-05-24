@@ -1,5 +1,9 @@
 package com.crazydude.common.db;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.OnLifecycleEvent;
+
 import com.crazydude.common.api.Season;
 import com.crazydude.common.api.TvShowDetails;
 import com.crazydude.common.api.TvShowsResponse;
@@ -17,7 +21,7 @@ import io.realm.RealmResults;
  * Created by Crazy on 09.01.2017.
  */
 
-public class DatabaseManager {
+public class DatabaseManager implements LifecycleObserver {
 
     private final Realm mRealm;
 
@@ -75,6 +79,7 @@ public class DatabaseManager {
                 .findFirst();
     }
 
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     public void close() {
         try {
             mRealm.removeAllChangeListeners();

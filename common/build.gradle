@@ -35,6 +35,10 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.1.0'
     compile 'com.github.se-bastiaan:TorrentStream-Android:2.3.0'
     compile 'com.google.android.exoplayer:exoplayer:r2.1.1'
+
+    compile "android.arch.lifecycle:runtime:1.0.0-alpha1"
+    compile "android.arch.lifecycle:extensions:1.0.0-alpha1"
+    annotationProcessor "android.arch.lifecycle:compiler:1.0.0-alpha1"
     compile 'com.squareup.retrofit2:retrofit:2.2.0'
     compile 'com.squareup.retrofit2:converter-scalars:2.2.0'
     compile 'com.squareup.retrofit2:converter-gson:2.2.0'

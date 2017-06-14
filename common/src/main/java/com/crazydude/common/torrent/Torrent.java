@@ -18,6 +18,6 @@ public interface Torrent extends LifecycleObserver {
 
         void onTorrentReadyToStream(File videoFile);
 
-        void onTorrentProgress(float progress, long downloadSpeed);
+        void onTorrentProgress(float progress, long downloadSpeed, String status, int seeds, int peers);
     }
 }

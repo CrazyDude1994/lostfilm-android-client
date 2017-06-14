@@ -11,9 +11,6 @@ android {
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
-
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
     }
     buildTypes {
         release {
@@ -29,13 +26,11 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
-    compile 'com.android.support:appcompat-v7:25.1.0'
+    compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.github.se-bastiaan:TorrentStream-Android:2.3.0'
+    compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'com.google.android.exoplayer:exoplayer:r2.1.1'
-
+    compile 'com.google.android.gms:play-services-ads:10.2.6'
     compile "android.arch.lifecycle:runtime:1.0.0-alpha1"
     compile "android.arch.lifecycle:extensions:1.0.0-alpha1"
     annotationProcessor "android.arch.lifecycle:compiler:1.0.0-alpha1"
@@ -48,6 +43,5 @@ dependencies {
     compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
     compile 'com.birbit:android-priority-jobqueue:2.0.1'
     compile 'org.greenrobot:eventbus:3.0.0'
-    testCompile 'junit:junit:4.12'
     compile project(path: ':domain')
 }

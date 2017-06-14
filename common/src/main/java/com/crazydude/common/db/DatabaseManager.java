@@ -13,6 +13,7 @@ import com.crazydude.common.db.models.TvShow;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.realm.Case;
 import io.realm.Realm;
 import io.realm.RealmList;
 import io.realm.RealmResults;
@@ -143,5 +144,13 @@ public class DatabaseManager implements LifecycleObserver {
             tvShow.setDescription(tvShowDetails.getDescription());
             realm.copyToRealmOrUpdate(tvShow);
         });
+    }
+
+    public List<TvShow> searchTvShows(String query) {
+        return mRealm.where(TvShow.class)
+                .contains("mTitle", query, Case.INSENSITIVE)
+                .or()
+                .contains("mTitleOriginal", query, Case.INSENSITIVE)
+                .findAll();
     }
 }

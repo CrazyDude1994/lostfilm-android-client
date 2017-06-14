@@ -30,6 +30,9 @@ import com.crazydude.common.torrent.AndroidTorrent;
 import com.crazydude.common.torrent.Torrent;
 import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.presenters.DetailsPresenter;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
 
 import java.io.File;
 
@@ -63,12 +66,15 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
     private PlaybackControlsRow.FastForwardAction mFastForwardAction;
     private TextView mTorrentProgress;
     private TextView mDownloadRate;
+    private TextView mPeersList;
+    private TextView mStatus;
     private Torrent mTorrent;
     private Player mPlayer;
     private long mVideoDuration = 0;
     private Disposable mDownloadLinkDisposable;
     private Action mDebugInfoAction;
     private LinearLayout mDebugInfoView;
+    private InterstitialAd mInterstitialAd;
 
     @Override
     public void onActionClicked(Action action) {
@@ -178,13 +184,18 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
     }
 
     @Override
-    public void onTorrentProgress(float progress, long downloadSpeed) {
+    public void onTorrentProgress(float progress, long downloadSpeed, String status, int seeds, int peers) {
         if (mVideoDuration > 0) {
-            mControlsRow.setBufferedProgressLong((long) ((progress / 100) * mVideoDuration));
-            mTorrentProgress.setText(String.valueOf(progress));
-            mDownloadRate.setText(String.format("%s MB/SEC", String.valueOf(downloadSpeed / 1024f / 1024)));
-            mGlue.notifyPlaybackRowChanged();
+            mControlsRow.setBufferedProgressLong((long) (progress * mVideoDuration));
+        } else {
+            mControlsRow.setTotalTimeLong(100);
+            mControlsRow.setBufferedProgressLong((long) (progress * 100));
         }
+        mGlue.notifyPlaybackRowChanged();
+        mTorrentProgress.setText(String.valueOf(progress * 100) + "%");
+        mDownloadRate.setText(String.format("%s MB/SEC", String.valueOf(downloadSpeed / 1024f / 1024)));
+        mPeersList.setText(seeds + "/" + peers);
+        mStatus.setText(status);
     }
 
     @Override
@@ -196,6 +207,8 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
         mTorrentProgress = (TextView) findViewById(R.id.torrent_progress);
         mDownloadRate = (TextView) findViewById(R.id.download_speed);
         mDebugInfoView = (LinearLayout) findViewById(R.id.debug_info);
+        mPeersList = (TextView) findViewById(R.id.seeds);
+        mStatus = (TextView) findViewById(R.id.status);
 
         Intent intent = getIntent();
         mTvShowId = intent.getIntExtra(EXTRA_TV_SHOW_ID, -1);
@@ -252,6 +265,7 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
         mGlue.setOnActionClickedListener(this);
 
         mControlsRow = new PlaybackControlsRow(mSelectedLink);
+        mControlsRow.setTotalTimeLong(100);
 
         ArrayObjectAdapter adapter = new ArrayObjectAdapter(new ControlButtonPresenterSelector());
         mPlayPauseAction = new PlaybackControlsRow.PlayPauseAction(this);
@@ -269,6 +283,21 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
 
         mGlue.setPlaybackRow(mControlsRow);
         mGlue.setPlaybackRowPresenter(presenter);
+
+//        loadAd();
+    }
+
+    private void loadAd() {
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId("ca-app-pub-3653607969878790/4100108263");
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                super.onAdClosed();
+                mInterstitialAd.loadAd(new AdRequest.Builder().build());
+            }
+        });
     }
 
     private void loadMovie() {

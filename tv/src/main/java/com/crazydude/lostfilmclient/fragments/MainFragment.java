@@ -19,6 +19,7 @@ import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.util.DisplayMetrics;
+import android.view.View;
 
 import com.crazydude.common.db.DatabaseManager;
 import com.crazydude.common.db.models.TvShow;
@@ -27,6 +28,7 @@ import com.crazydude.common.jobs.JobHelper;
 import com.crazydude.common.utils.Utils;
 import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.activity.LoginActivity;
+import com.crazydude.lostfilmclient.activity.SearchActivity;
 import com.crazydude.lostfilmclient.presenters.MenuPresenter;
 import com.crazydude.lostfilmclient.presenters.TvShowPresenter;
 import com.crazydude.lostfilmclient.utils.EventBusWrapper;
@@ -44,7 +46,7 @@ import java.util.Map;
  */
 
 public class MainFragment extends BrowseFragment implements OnItemViewClickedListener,
-        OnItemViewSelectedListener, LifecycleOwner {
+        OnItemViewSelectedListener, LifecycleOwner, View.OnClickListener {
 
     private static final int OTHERS_ID = 0;
     private static final int SETTINGS_ID = 0;
@@ -73,6 +75,9 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setOnSearchClickedListener(this);
+        setSearchAffordanceColor(getBrandColor());
+
         mJobHelper = new JobHelper(getActivity().getApplicationContext());
         mDatabaseManager = new DatabaseManager();
         getLifecycle().addObserver(mJobHelper);
@@ -114,6 +119,12 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
     @Override
     public Lifecycle getLifecycle() {
         return mLifecycleRegistry;
+    }
+
+    @Override
+    public void onClick(View v) {
+        Intent intent = new Intent(getActivity(), SearchActivity.class);
+        startActivity(intent);
     }
 
     private void onSettingsClicked() {

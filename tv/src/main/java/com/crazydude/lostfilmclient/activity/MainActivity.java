@@ -28,7 +28,7 @@ public class MainActivity extends LifecycleActivity {
 
     @Subscribe
     public void handleEvent(WelcomeFragment.TutorialCompletedEvent event) {
-        setContentView(R.layout.activity_main);
+        switchToMainFragment();
     }
 
     @Subscribe
@@ -59,21 +59,25 @@ public class MainActivity extends LifecycleActivity {
         super.onCreate(savedInstanceState);
 
         SharedPreferences sharedPreferences =
-                PreferenceManager.getDefaultSharedPreferences(this);
+                PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         if (!sharedPreferences.getBoolean(
                 WelcomeFragment.COMPLETED_ONBOARDING_PREF_NAME, false)) {
             setContentView(R.layout.activity_main_first_time);
         } else {
-            setContentView(R.layout.activity_main);
-            getFragmentManager()
-                    .beginTransaction()
-                    .add(R.id.placeholder, new MainFragment())
-                    .commit();
+            switchToMainFragment();
         }
 
         getLifecycle().addObserver(new EventBusWrapper(this));
 
         prepareBackgroundManager();
+    }
+
+    private void switchToMainFragment() {
+        setContentView(R.layout.activity_main);
+        getFragmentManager()
+                .beginTransaction()
+                .add(R.id.placeholder, new MainFragment())
+                .commit();
     }
 
     private void prepareBackgroundManager() {

@@ -13,6 +13,7 @@ import com.crazydude.lostfilmclient.fragments.TvShowDetailsFragment;
 import com.crazydude.lostfilmclient.fragments.WelcomeFragment;
 import com.crazydude.lostfilmclient.utils.DebouncedImageLoader;
 import com.crazydude.lostfilmclient.utils.EventBusWrapper;
+import com.crazydude.lostfilmclient.utils.SettingsManager;
 
 import org.greenrobot.eventbus.Subscribe;
 
@@ -58,10 +59,8 @@ public class MainActivity extends LifecycleActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        SharedPreferences sharedPreferences =
-                PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        if (!sharedPreferences.getBoolean(
-                WelcomeFragment.COMPLETED_ONBOARDING_PREF_NAME, false)) {
+        SettingsManager settingsManager = new SettingsManager(getApplicationContext());
+        if (settingsManager.shouldShowWelcomeScreen()) {
             setContentView(R.layout.activity_main_first_time);
         } else {
             switchToMainFragment();

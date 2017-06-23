@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.crazydude.lostfilmclient.R;
+import com.crazydude.lostfilmclient.utils.SettingsManager;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -73,11 +74,8 @@ public class WelcomeFragment extends OnboardingFragment {
     @Override
     protected void onFinishFragment() {
         super.onFinishFragment();
-        SharedPreferences.Editor sharedPreferencesEditor =
-                PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
-        sharedPreferencesEditor.putBoolean(
-                COMPLETED_ONBOARDING_PREF_NAME, true);
-        sharedPreferencesEditor.apply();
+        SettingsManager settingsManager = new SettingsManager(getActivity().getApplicationContext());
+        settingsManager.onWelcomeScreenCompleted();
         EventBus.getDefault().post(new TutorialCompletedEvent());
     }
 

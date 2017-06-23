@@ -30,6 +30,7 @@ import com.crazydude.common.torrent.AndroidTorrent;
 import com.crazydude.common.torrent.Torrent;
 import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.presenters.DetailsPresenter;
+import com.crazydude.lostfilmclient.utils.SettingsManager;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
@@ -305,7 +306,8 @@ public class PlayerActivity extends LifecycleActivity implements Observer<Downlo
     }
 
     private void startTorrent() {
-        mTorrent = new AndroidTorrent(this);
+        SettingsManager settingsManager = new SettingsManager(getApplicationContext());
+        mTorrent = new AndroidTorrent(this, settingsManager.removeTorrentAfterStop(), settingsManager.getDownloadFolder());
         getLifecycle().addObserver(mTorrent);
         mTorrent.startTorrent(mSelectedLink.getUrl());
     }

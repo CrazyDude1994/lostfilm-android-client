@@ -30,11 +30,11 @@ public class AndroidTorrent implements Torrent, TorrentListener {
     private Subscription mUpdateSubscription;
     private com.github.se_bastiaan.torrentstream.Torrent mTorrent;
 
-    public AndroidTorrent(Torrent.Listener listener) {
+    public AndroidTorrent(Torrent.Listener listener, boolean removeAfterStop, String downloadDirectory) {
         mListener = listener;
         TorrentOptions torrentOptions = new TorrentOptions.Builder()
-                .saveLocation(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
-//                .removeFilesAfterStop(true)
+                .saveLocation(downloadDirectory)
+                .removeFilesAfterStop(removeAfterStop)
                 .build();
 
         mTorrentStream = TorrentStream.init(torrentOptions);

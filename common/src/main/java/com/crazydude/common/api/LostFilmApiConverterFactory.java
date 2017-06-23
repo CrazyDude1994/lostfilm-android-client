@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,6 +58,7 @@ public class LostFilmApiConverterFactory extends Converter.Factory {
                                 }
                             }
                         }
+                        Collections.reverse(episodes);
                         String name = season.getElementsByTag("h2").text();
                         seasons.add(new Season(name, episodes));
                     }

@@ -16,16 +16,16 @@ import com.crazydude.lostfilmclient.R;
 
 public class EpisodePresenter extends Presenter {
 
-    private Context mContext;
+    private Context context;
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
-        mContext = parent.getContext();
-        ImageCardView cardView = new ImageCardView(mContext) {
+        context = parent.getContext();
+        ImageCardView cardView = new ImageCardView(context) {
             @Override
             public void setSelected(boolean selected) {
-                int selected_background = mContext.getResources().getColor(R.color.detail_background);
-                int default_background = mContext.getResources().getColor(R.color.default_background);
+                int selected_background = context.getResources().getColor(R.color.detail_background);
+                int default_background = context.getResources().getColor(R.color.default_background);
                 int color = selected ? selected_background : default_background;
                 findViewById(R.id.info_field).setBackgroundColor(color);
                 super.setSelected(selected);

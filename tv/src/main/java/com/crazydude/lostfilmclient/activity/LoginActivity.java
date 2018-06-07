@@ -1,7 +1,8 @@
 package com.crazydude.lostfilmclient.activity;
 
-import android.arch.lifecycle.LifecycleActivity;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import com.crazydude.common.events.LoginEvent;
@@ -15,7 +16,7 @@ import org.greenrobot.eventbus.ThreadMode;
  * Created by Crazy on 09.01.2017.
  */
 
-public class LoginActivity extends LifecycleActivity {
+public class LoginActivity extends FragmentActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void handle(LoginEvent event) {

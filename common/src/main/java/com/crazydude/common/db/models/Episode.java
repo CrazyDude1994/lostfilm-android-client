@@ -10,46 +10,52 @@ import io.realm.RealmObject;
 
 public class Episode extends RealmObject implements Utils.PosterProvider {
 
-    private String mId;
-    private String mName;
-    private Season mSeason;
+    private String id;
+    private String name;
+    private Season season;
     private int detailsId;
-    private String mPosterUrl;
+    private String posterUrl;
+    private String episodeFilePath;
+    private int fileDownloadPercentage;
+    private boolean isDownloading;
 
     public Episode() {
-
     }
 
-    public Episode(String id, String name, Season season, int detailsId, String posterUrl) {
-        mId = id;
-        mName = name;
-        mSeason = season;
+    public Episode(String id, String name, Season season, int detailsId, String posterUrl,
+                   String episodeFilePath, int fileDownloadPercentage, boolean isDownloading) {
+        this.id = id;
+        this.name = name;
+        this.season = season;
         this.detailsId = detailsId;
-        mPosterUrl = posterUrl;
+        this.posterUrl = posterUrl;
+        this.episodeFilePath = episodeFilePath;
+        this.fileDownloadPercentage = fileDownloadPercentage;
+        this.isDownloading = isDownloading;
     }
 
     public String getId() {
-        return mId;
+        return id;
     }
 
     public void setId(String id) {
-        mId = id;
+        this.id = id;
     }
 
     public String getName() {
-        return mName;
+        return name;
     }
 
     public void setName(String name) {
-        mName = name;
+        this.name = name;
     }
 
     public Season getSeason() {
-        return mSeason;
+        return season;
     }
 
     public void setSeason(Season season) {
-        mSeason = season;
+        this.season = season;
     }
 
     public int getDetailsId() {
@@ -61,16 +67,40 @@ public class Episode extends RealmObject implements Utils.PosterProvider {
     }
 
     public String getPosterUrl() {
-        return mPosterUrl;
+        return posterUrl;
     }
 
     public void setPosterUrl(String posterUrl) {
-        mPosterUrl = posterUrl;
+        this.posterUrl = posterUrl;
     }
 
     @Override
     public String providePosterURL() {
         return Utils.generatePosterUrl(getSeason().getTvShow().getId(), getSeason().getId(),
                 getId());
+    }
+
+    public String getEpisodeFilePath() {
+        return episodeFilePath;
+    }
+
+    public void setEpisodeFilePath(String episodeFilePath) {
+        this.episodeFilePath = episodeFilePath;
+    }
+
+    public int getFileDownloadPercentage() {
+        return fileDownloadPercentage;
+    }
+
+    public void setFileDownloadPercentage(int fileDownloadPercentage) {
+        this.fileDownloadPercentage = fileDownloadPercentage;
+    }
+
+    public boolean isDownloading() {
+        return isDownloading;
+    }
+
+    public void setDownloading(boolean downloading) {
+        isDownloading = downloading;
     }
 }

@@ -1,9 +1,9 @@
 package com.crazydude.lostfilmclient.activity;
 
-import android.arch.lifecycle.LifecycleActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BackgroundManager;
+import android.support.v4.app.FragmentActivity;
 import android.util.DisplayMetrics;
 
 import com.crazydude.lostfilmclient.R;
@@ -19,7 +19,7 @@ import org.greenrobot.eventbus.Subscribe;
  * Created by Crazy on 10.01.2017.
  */
 
-public class SeasonListActivity extends LifecycleActivity {
+public class SeasonListActivity extends FragmentActivity {
 
     public static final String EXTRA_TVSHOW_ID = "extra_tvshow_id";
     public static final String EXTRA_MODE = "extra_tvshow_mode";

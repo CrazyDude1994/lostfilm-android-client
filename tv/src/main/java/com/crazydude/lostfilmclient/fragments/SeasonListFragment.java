@@ -36,10 +36,10 @@ public abstract class SeasonListFragment extends BrowseFragment implements OnIte
         RealmChangeListener<TvShow>, OnItemViewSelectedListener, LifecycleOwner {
 
     private int mTvShowId;
-    private DatabaseManager mDatabaseManager;
-    private ArrayObjectAdapter mCategoriesAdapter;
-    private TvShow mTvShow;
-    private Lifecycle mLifecycle = new LifecycleRegistry(this);
+    protected DatabaseManager databaseManager;
+    private ArrayObjectAdapter categoriesAdapter;
+    private TvShow tvShow;
+    private Lifecycle lifecycleRegistry = new LifecycleRegistry(this);
 
     @Override
     public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
@@ -62,14 +62,14 @@ public abstract class SeasonListFragment extends BrowseFragment implements OnIte
         super.onCreate(savedInstanceState);
         Bundle arguments = getArguments();
         mTvShowId = arguments.getInt(SeasonListActivity.EXTRA_TVSHOW_ID);
-        mDatabaseManager = new DatabaseManager();
-        getLifecycle().addObserver(mDatabaseManager);
+        databaseManager = new DatabaseManager();
+        getLifecycle().addObserver(databaseManager);
         setupUI();
     }
 
     @Override
     public Lifecycle getLifecycle() {
-        return mLifecycle;
+        return lifecycleRegistry;
     }
 
     private void setupUI() {
@@ -79,23 +79,23 @@ public abstract class SeasonListFragment extends BrowseFragment implements OnIte
     }
 
     private void loadData() {
-        mTvShow = mDatabaseManager.getTvShow(mTvShowId);
-        mTvShow.addChangeListener(this);
-        Log.d("TvShow", String.format("Data loaded %d Seasons: %d", mTvShowId, mTvShow.getSeasons().size()));
+        tvShow = databaseManager.getTvShow(mTvShowId);
+        tvShow.addChangeListener(this);
+        Log.d("TvShow", String.format("Data loaded %d Seasons: %d", mTvShowId, tvShow.getSeasons().size()));
         updateData();
     }
 
     private void updateData() {
-        mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        for (Season season : mTvShow.getSeasons()) {
+        categoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+        for (Season season : tvShow.getSeasons()) {
             ArrayObjectAdapter episodeAdapter = new ArrayObjectAdapter(new EpisodePresenter());
             episodeAdapter.addAll(0, season.getEpisodes());
             if (season.isHasFullSeasonDownloadUrl()) {
-                episodeAdapter.add(new Episode("99", getString(R.string.full_season), season, -1, null));
+                episodeAdapter.add(new Episode("99", getString(R.string.full_season), season, -1, null, null, 0, false));
             }
-            mCategoriesAdapter.add(new ListRow(new HeaderItem(season.getName()), episodeAdapter));
+            categoriesAdapter.add(new ListRow(new HeaderItem(season.getName()), episodeAdapter));
         }
-        setAdapter(mCategoriesAdapter);
+        setAdapter(categoriesAdapter);
     }
 
     public static class EpisodeSelectedEvent {

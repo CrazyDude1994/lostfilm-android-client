@@ -2,7 +2,6 @@ package com.crazydude.lostfilmclient.activity;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.arch.lifecycle.LifecycleActivity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -15,6 +14,7 @@ import android.support.v17.leanback.widget.OnActionClickedListener;
 import android.support.v17.leanback.widget.PlaybackControlsRow;
 import android.support.v17.leanback.widget.PlaybackControlsRowPresenter;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -45,7 +45,7 @@ import io.reactivex.disposables.Disposable;
  * Created by Crazy on 11.01.2017.
  */
 
-public class PlayerActivity extends LifecycleActivity implements Observer<DownloadLink[]>,
+public class PlayerActivity extends FragmentActivity implements Observer<DownloadLink[]>,
         SurfaceHolder.Callback, OnActionClickedListener, Torrent.Listener, AndroidPlayer.Listener {
 
     public static final String EXTRA_EPISODE_ID = "extra_episode_id";

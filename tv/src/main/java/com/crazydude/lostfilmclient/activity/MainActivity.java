@@ -1,10 +1,8 @@
 package com.crazydude.lostfilmclient.activity;
 
-import android.arch.lifecycle.LifecycleActivity;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v17.leanback.app.BackgroundManager;
+import android.support.v4.app.FragmentActivity;
 import android.util.DisplayMetrics;
 
 import com.crazydude.lostfilmclient.R;
@@ -21,7 +19,7 @@ import org.greenrobot.eventbus.Subscribe;
  * Created by Crazy on 07.01.2017.
  */
 
-public class MainActivity extends LifecycleActivity {
+public class MainActivity extends FragmentActivity {
 
     private BackgroundManager mBackgroundManager;
     private DisplayMetrics mMetrics;

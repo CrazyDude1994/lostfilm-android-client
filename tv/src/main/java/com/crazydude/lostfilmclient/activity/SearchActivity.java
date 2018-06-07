@@ -1,9 +1,8 @@
 package com.crazydude.lostfilmclient.activity;
 
-import android.app.Activity;
-import android.arch.lifecycle.LifecycleActivity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentActivity;
 
 import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.fragments.MainFragment;
@@ -16,7 +15,7 @@ import org.greenrobot.eventbus.Subscribe;
  * Created by CrazyDude on 5/28/17.
  */
 
-public class SearchActivity extends LifecycleActivity {
+public class SearchActivity extends FragmentActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

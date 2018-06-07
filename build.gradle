@@ -6,12 +6,11 @@ buildscript {
         maven {
             url "https://plugins.gradle.org/m2/"
         }
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.3'
+        classpath 'com.android.tools.build:gradle:3.1.2'
         classpath "io.realm:realm-gradle-plugin:2.2.2"
-        classpath 'me.tatarka:gradle-retrolambda:3.4.0'
-        classpath "net.ltgt.gradle:gradle-apt-plugin:0.10"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }

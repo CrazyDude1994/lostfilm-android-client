@@ -22,6 +22,8 @@ import android.util.DisplayMetrics;
 import android.view.View;
 
 import com.crazydude.common.db.DatabaseManager;
+import com.crazydude.common.db.models.Episode;
+import com.crazydude.common.db.models.Season;
 import com.crazydude.common.db.models.TvShow;
 import com.crazydude.common.events.TvShowsUpdateEvent;
 import com.crazydude.common.jobs.JobHelper;
@@ -29,6 +31,7 @@ import com.crazydude.common.utils.Utils;
 import com.crazydude.lostfilmclient.R;
 import com.crazydude.lostfilmclient.activity.LoginActivity;
 import com.crazydude.lostfilmclient.activity.SearchActivity;
+import com.crazydude.lostfilmclient.presenters.EpisodePresenter;
 import com.crazydude.lostfilmclient.presenters.MenuPresenter;
 import com.crazydude.lostfilmclient.presenters.TvShowPresenter;
 import com.crazydude.lostfilmclient.utils.EventBusWrapper;
@@ -48,15 +51,15 @@ import java.util.Map;
 public class MainFragment extends BrowseFragment implements OnItemViewClickedListener,
         OnItemViewSelectedListener, LifecycleOwner, View.OnClickListener {
 
-    private static final int OTHERS_ID = 0;
+    private static final int DOWNLOADS_ID = 0;
+    private static final int OTHERS_ID = 1;
     private static final int SETTINGS_ID = 0;
     private ArrayObjectAdapter mCategoriesAdapter;
     private JobHelper mJobHelper;
     private DatabaseManager mDatabaseManager;
-    private BackgroundManager mBackgroundManager;
-    private DisplayMetrics mMetrics;
     private Map<String, ArrayObjectAdapter> mAlphabetAdapterMap = new HashMap<>();
     private LifecycleRegistry mLifecycleRegistry = new LifecycleRegistry(this);
+    private ArrayObjectAdapter downloadsAdapter;
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdate(TvShowsUpdateEvent event) {
@@ -84,6 +87,9 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
         getLifecycle().addObserver(mDatabaseManager);
         getLifecycle().addObserver(new EventBusWrapper(this));
         mCategoriesAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+        downloadsAdapter = new ArrayObjectAdapter(new EpisodePresenter());
+        mCategoriesAdapter.add(new ListRow(OTHERS_ID, new HeaderItem("Загрузки"), downloadsAdapter));
+        mCategoriesAdapter.add(new DividerRow());
         mCategoriesAdapter.add(new DividerRow());
         ArrayObjectAdapter othersAdapter = new ArrayObjectAdapter(new MenuPresenter());
         othersAdapter.add("Настройки");
@@ -152,6 +158,14 @@ public class MainFragment extends BrowseFragment implements OnItemViewClickedLis
 
                 if (!found) {
                     tvShowsAdapter.add(tvShow);
+                }
+            }
+
+            for (Season season : tvShow.getSeasons()) {
+                for (Episode episode : season.getEpisodes()) {
+                    if (episode.isDownloading()) {
+                        downloadsAdapter.add(episode);
+                    }
                 }
             }
         }
